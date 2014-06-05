@@ -1,0 +1,31 @@
+{
+  "name": "retext-directionality",
+  "version": "0.0.1",
+  "description": "Detect directionality (left-to-right, right-to-left) in Retext",
+  "keywords": [
+    "directionality",
+    "rtl",
+    "ltr",
+    "retext"
+  ],
+  "author": "Titus Wormer <tituswormer@gmail.com>",
+  "license": "MIT",
+  "devDependencies": {
+    "complexity-report": "~1.0.3",
+    "istanbul": "~0.2.10",
+    "jscs": "^1.4.5",
+    "jshint": "~2.5.1",
+    "mocha": "~1.20.1",
+    "retext": "~0.0.4"
+  },
+  "dependencies": {
+      "retext-visit": "~0.0.2"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/wooorm/retext-directionality.git"
+  },
+  "scripts": {
+    "test": "make test"
+  }
+}
