@@ -19,7 +19,8 @@
     "retext": "~0.0.4"
   },
   "dependencies": {
-      "retext-visit": "~0.0.2"
+    "direction": "~0.0.1",
+    "retext-visit": "~0.0.2"
   },
   "repository": {
     "type": "git",
