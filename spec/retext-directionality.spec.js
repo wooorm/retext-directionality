@@ -1,29 +1,19 @@
-/* jshint -W084, -W093 */
+'use strict';
 
 var directionality = require('..'),
+    visit = require('retext-visit'),
     Retext = require('retext'),
-    assert = require('assert'),
-    data = {
-        'a' : 'ltr',
-        '\u05e0' : 'rtl',
-        '\u0000' : 'neutral',
-        '\u0020' : 'neutral',
-        '!' : 'neutral',
-        '@' : 'neutral',
-        '[' : 'neutral',
-        '`' : 'neutral',
-        '0' : 'neutral',
-        '123' : 'neutral'
-    };
+    assert = require('assert');
 
 describe('directionality()', function () {
-    var tree, rightToLeftWords;
+    var tree, leftToRightWords, rightToLeftWords;
 
     it('should be of type `function`', function () {
         assert(typeof directionality === 'function');
     });
 
     tree = new Retext()
+        .use(visit)
         .use(directionality)
         .parse('A simple, english, sentence.');
 
@@ -69,7 +59,8 @@ describe('directionality()', function () {
         tree.visitType(tree.WORD_NODE, function (wordNode) {
             var parent = wordNode;
 
-            while (parent = parent.parent) {
+            while (parent.parent) {
+                parent = parent.parent;
                 assert('direction' in parent.data);
                 assert(parent.data.direction === 'ltr');
             }
@@ -88,7 +79,8 @@ describe('directionality()', function () {
 
                 shouldBeDirection = iterator === 3 ? 'rtl' : 'neutral';
 
-                while (parent = parent.parent) {
+                while (parent.parent) {
+                    parent = parent.parent;
                     assert(parent.data.direction === shouldBeDirection);
                 }
             });
@@ -97,8 +89,7 @@ describe('directionality()', function () {
 
     it('should automatically set previous parents direction to `"neutral"`' +
         'when all `WordNode`s are removed', function () {
-            var iterator = -1,
-                parent = tree.head.head;
+            var parent = tree.head.head;
 
             tree.visitType(tree.WORD_NODE, function (wordNode) {
                 wordNode.remove();
@@ -110,16 +101,4 @@ describe('directionality()', function () {
             }
         }
     );
-});
-
-describe('direction', function () {
-    Object.keys(data).forEach(function (value) {
-        var direction = data[value];
-
-        it('should classify `' + value + '` as `' + direction + '` ',
-            function () {
-                assert(directionality.direction(value) === direction);
-            }
-        );
-    });
 });
