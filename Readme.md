@@ -1,4 +1,4 @@
-# retext-directionality [![Build Status](https://travis-ci.org/wooorm/retext-directionality.png)](https://travis-ci.org/wooorm/retext-directionality)
+# retext-directionality [![Build Status](https://travis-ci.org/wooorm/retext-directionality.svg?branch=master)](https://travis-ci.org/wooorm/retext-directionality) [![Coverage Status](https://img.shields.io/coveralls/wooorm/retext-directionality.svg)](https://coveralls.io/r/wooorm/retext-directionality?branch=master)
 
 **[retext](https://github.com/wooorm/retext "Retext")** directionality detection.
 
