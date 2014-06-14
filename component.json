@@ -2,7 +2,7 @@
   "name": "retext-directionality",
   "repository": "wooorm/retext-directionality",
   "description": "Detect directionality (left-to-right, right-to-left) in Retext",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "keywords": [
     "directionality",
     "rtl",
