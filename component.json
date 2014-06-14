@@ -1,0 +1,20 @@
+{
+  "name": "retext-directionality",
+  "repository": "wooorm/retext-directionality",
+  "description": "Detect directionality (left-to-right, right-to-left) in Retext",
+  "version": "0.0.1",
+  "keywords": [
+    "directionality",
+    "rtl",
+    "ltr",
+    "retext"
+  ],
+  "dependencies": {
+    "wooorm/direction": "^0.0.1"
+    "wooorm/retext-visit": "^0.0.3"
+  },
+  "scripts" : [
+    "index.js"
+  ],
+  "license": "MIT"
+}
