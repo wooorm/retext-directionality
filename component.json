@@ -10,7 +10,7 @@
     "retext"
   ],
   "dependencies": {
-    "wooorm/direction": "^0.0.1"
+    "wooorm/direction": "^0.0.2"
   },
   "scripts" : [
     "index.js"
