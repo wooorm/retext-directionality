@@ -3,23 +3,23 @@
 var direction = require('direction');
 
 function onchangedirectioninside(parent) {
+    var node, currentDirection, nodeDirection;
+
     if (!parent) {
         return;
     }
 
-    var node = parent.head,
-        currentDirection, nodeDirection;
+    node = parent.head;
 
     while (node) {
         nodeDirection = node.data.direction;
 
-        if (nodeDirection) {
+        if (nodeDirection !== 'neutral') {
             if (!currentDirection) {
                 currentDirection = nodeDirection;
-            } else if (nodeDirection !== currentDirection &&
-                nodeDirection !== 'neutral') {
-                    currentDirection = 'neutral';
-                    break;
+            } else if (nodeDirection !== currentDirection) {
+                currentDirection = 'neutral';
+                break;
             }
         }
 
@@ -43,14 +43,10 @@ function onchangetext(value) {
     var data = this.data,
         oldDirection, newDirection;
 
-    if (!value) {
-        data.direction = null;
-        return;
-    }
-
     oldDirection = data.direction;
+    newDirection = value ? direction(value) : 'neutral';
 
-    data.direction = newDirection = direction(value);
+    data.direction = newDirection;
 
     if (newDirection !== oldDirection) {
         onchangedirectioninside(this.parent);
