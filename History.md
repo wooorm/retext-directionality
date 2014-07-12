@@ -1,4 +1,15 @@
 
+n.n.n / 2014-07-12
+==================
+
+ * Added changelog
+ * Fixed spec for changes in 16e492a
+ * Added functionality to detect direction on non-word nodes
+ * Directions can no longer be `null`, just `"neutral"`
+ * Removed unused code
+ * Removed functionality to browserify unit tests by default
+ * Updated eslint, istanbul, retext, retext-visit, direction
+
 0.0.4 / 2014-06-19
 ==================
 
