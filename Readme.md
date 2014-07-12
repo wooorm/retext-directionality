@@ -47,7 +47,7 @@ console.log(root.toString(), root.data.direction);
 This example also uses [retext-visit](https://github.com/wooorm/retext-visit).
 
 ## API
-None, the plugin automatically detects the direction (either `"ltr"`, `"rtl"`, or `"neutral"`) of each word when its created or changed, stores that direction in `data.direction` on the word. If every WordNode inside a parent has the same direction, the parent has the same direction, otherwise, the parent has a neutral direction.
+None, the plugin automatically detects the direction (either `"ltr"`, `"rtl"`, or `"neutral"`) of each text node when its created, changed, or removed, and stores that direction in `data.direction` on the node. If every text node inside a parent has the same direction, the parent has the same direction, otherwise, the parent has a neutral direction.
 
 ## Browser Support
 Pretty much every browser (available through browserstack) runs all retext-directionality unit tests.
