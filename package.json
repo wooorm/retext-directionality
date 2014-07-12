@@ -12,15 +12,15 @@
   "license": "MIT",
   "devDependencies": {
     "browserify": "^4.1.11",
-    "eslint": "^0.6.2",
-    "istanbul": "~0.2.11",
+    "eslint": "^0.7.4",
+    "istanbul": "^0.3.0",
     "jscs": "^1.5.3",
     "mocha": "~1.20.1",
-    "retext": "~0.0.12",
-    "retext-visit": "~0.0.5"
+    "retext": "^0.1.0-rc.2",
+    "retext-visit": "^0.1.0"
   },
   "dependencies": {
-    "direction": "~0.0.3"
+    "direction": "~0.1.0"
   },
   "repository": {
     "type": "git",
