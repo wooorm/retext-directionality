@@ -34,7 +34,7 @@ describe('directionality()', function () {
         var iterator = -1;
 
         tree.visitType(tree.WORD_NODE, function (wordNode) {
-            wordNode.fromString(leftToRightWords[++iterator]);
+            wordNode[0].fromString(leftToRightWords[++iterator]);
             assert(wordNode.data.direction === 'ltr');
         });
     });
@@ -42,14 +42,14 @@ describe('directionality()', function () {
     it('should set the direction of a `WordNode` to null, when no value ' +
         'is given', function () {
             tree.visitType(tree.WORD_NODE, function (wordNode) {
-                wordNode.fromString('');
-                assert(wordNode.data.direction === null);
+                wordNode[0].fromString('');
+                assert(wordNode.data.direction === 'neutral');
             });
 
             var iterator = -1;
 
             tree.visitType(tree.WORD_NODE, function (wordNode) {
-                wordNode.fromString(leftToRightWords[++iterator]);
+                wordNode[0].fromString(leftToRightWords[++iterator]);
                 assert(wordNode.data.direction === 'ltr');
             }
         );
@@ -74,7 +74,7 @@ describe('directionality()', function () {
             tree.visitType(tree.WORD_NODE, function (wordNode) {
                 var parent = wordNode, shouldBeDirection;
 
-                wordNode.fromString(rightToLeftWords[++iterator]);
+                wordNode[0].fromString(rightToLeftWords[++iterator]);
                 assert(wordNode.data.direction === 'rtl');
 
                 shouldBeDirection = iterator === 3 ? 'rtl' : 'neutral';
@@ -91,8 +91,8 @@ describe('directionality()', function () {
         'when all `WordNode`s are removed', function () {
             var parent = tree.head.head;
 
-            tree.visitType(tree.WORD_NODE, function (wordNode) {
-                wordNode.remove();
+            tree.visitType(tree.TEXT_NODE, function (node) {
+                node.remove();
             });
 
             while (parent) {
