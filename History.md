@@ -1,5 +1,5 @@
 
-n.n.n / 2014-07-22
+0.1.1 / 2014-07-22
 ==================
 
  * Parents now receive updates when non-text nodes get inserted/removed
