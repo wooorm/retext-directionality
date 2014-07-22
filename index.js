@@ -54,11 +54,11 @@ function onchangetext(value) {
 }
 
 function attach(retext) {
-    var TextNode = retext.parser.TextOM.TextNode;
+    var Node = retext.parser.TextOM.Node;
 
-    TextNode.on('changetext', onchangetext);
-    TextNode.on('insert', oninsert);
-    TextNode.on('remove', onremove);
+    Node.on('changetext', onchangetext);
+    Node.on('insert', oninsert);
+    Node.on('remove', onremove);
 }
 
 exports = module.exports = function () {};
