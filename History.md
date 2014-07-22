@@ -1,4 +1,12 @@
 
+n.n.n / 2014-07-22
+==================
+
+ * Parents now receive updates when non-text nodes get inserted/removed
+ * Added components to gitignore
+ * Added retext as a peer dependency
+ * Updated documentation for latest changes
+
 0.1.0 / 2014-07-12
 ==================
 
