@@ -1,0 +1,15 @@
+{
+  "name": "retext-directionality-gh-pages",
+  "private": true,
+  "repository": "wooorm/retext-directionality",
+  "dependencies": {
+    "wooorm/retext-directionality": "^0.1.0",
+    "wooorm/retext-dom": "^0.1.0",
+    "wooorm/retext": "^0.1.0-rc.5",
+    "wooorm/retext-visit": "~0.1.0"
+  },
+  "scripts": [
+    "index.js"
+  ],
+  "license": "MIT"
+}
