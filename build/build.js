@@ -52,114 +52,6 @@ require.define = function (name, exports) {
     exports: exports
   };
 };
-require.register("wooorm~direction@0.1.0", function (exports, module) {
-'use strict';
-
-var GROUP_LEFT_TO_RIGHT, GROUP_RIGHT_TO_LEFT,
-    EXPRESSION_LEFT_TO_RIGHT, EXPRESSION_RIGHT_TO_LEFT;
-
-GROUP_LEFT_TO_RIGHT = 'A-Za-z\u00C0-\u00D6\u00D8-\u00F6' +
-    '\u00F8-\u02B8\u0300-\u0590\u0800-\u1FFF\u200E\u2C00-\uFB1C' +
-    '\uFE00-\uFE6F\uFEFD-\uFFFF';
-
-GROUP_RIGHT_TO_LEFT = '\u0591-\u07FF\uFB1D-\uFDFD\uFE70-\uFEFC';
-
-EXPRESSION_LEFT_TO_RIGHT = new RegExp(
-    '^[^' + GROUP_RIGHT_TO_LEFT + ']*[' + GROUP_LEFT_TO_RIGHT + ']'
-);
-
-EXPRESSION_RIGHT_TO_LEFT = new RegExp(
-    '^[^' + GROUP_LEFT_TO_RIGHT + ']*[' + GROUP_RIGHT_TO_LEFT + ']'
-);
-
-function direction(value) {
-    value = value.toString();
-
-    if (EXPRESSION_RIGHT_TO_LEFT.test(value)) {
-        return 'rtl';
-    }
-
-    if (EXPRESSION_LEFT_TO_RIGHT.test(value)) {
-        return 'ltr';
-    }
-
-    return 'neutral';
-}
-
-module.exports = direction;
-
-});
-
-require.register("wooorm~retext-directionality@0.1.0", function (exports, module) {
-'use strict';
-
-var direction = require("wooorm~direction@0.1.0");
-
-function onchangedirectioninside(parent) {
-    var node, currentDirection, nodeDirection;
-
-    if (!parent) {
-        return;
-    }
-
-    node = parent.head;
-
-    while (node) {
-        nodeDirection = node.data.direction;
-
-        if (nodeDirection !== 'neutral') {
-            if (!currentDirection) {
-                currentDirection = nodeDirection;
-            } else if (nodeDirection !== currentDirection) {
-                currentDirection = 'neutral';
-                break;
-            }
-        }
-
-        node = node.next;
-    }
-
-    parent.data.direction = currentDirection || 'neutral';
-
-    onchangedirectioninside(parent.parent);
-}
-
-function oninsert() {
-    onchangedirectioninside(this.parent);
-}
-
-function onremove(previousParent) {
-    onchangedirectioninside(previousParent);
-}
-
-function onchangetext(value) {
-    var data = this.data,
-        oldDirection, newDirection;
-
-    oldDirection = data.direction;
-    newDirection = value ? direction(value) : 'neutral';
-
-    data.direction = newDirection;
-
-    if (newDirection !== oldDirection) {
-        onchangedirectioninside(this.parent);
-    }
-}
-
-function attach(retext) {
-    var Node = retext.parser.TextOM.Node;
-
-    Node.on('changetext', onchangetext);
-    Node.on('insert', oninsert);
-    Node.on('remove', onremove);
-}
-
-exports = module.exports = function () {};
-
-exports.attach = attach;
-
-});
-
 require.register("wooorm~retext-visit@0.1.0", function (exports, module) {
 'use strict';
 
@@ -2801,8 +2693,116 @@ exports = module.exports = Retext;
 
 });
 
+require.register("wooorm~direction@0.1.0", function (exports, module) {
+'use strict';
+
+var GROUP_LEFT_TO_RIGHT, GROUP_RIGHT_TO_LEFT,
+    EXPRESSION_LEFT_TO_RIGHT, EXPRESSION_RIGHT_TO_LEFT;
+
+GROUP_LEFT_TO_RIGHT = 'A-Za-z\u00C0-\u00D6\u00D8-\u00F6' +
+    '\u00F8-\u02B8\u0300-\u0590\u0800-\u1FFF\u200E\u2C00-\uFB1C' +
+    '\uFE00-\uFE6F\uFEFD-\uFFFF';
+
+GROUP_RIGHT_TO_LEFT = '\u0591-\u07FF\uFB1D-\uFDFD\uFE70-\uFEFC';
+
+EXPRESSION_LEFT_TO_RIGHT = new RegExp(
+    '^[^' + GROUP_RIGHT_TO_LEFT + ']*[' + GROUP_LEFT_TO_RIGHT + ']'
+);
+
+EXPRESSION_RIGHT_TO_LEFT = new RegExp(
+    '^[^' + GROUP_LEFT_TO_RIGHT + ']*[' + GROUP_RIGHT_TO_LEFT + ']'
+);
+
+function direction(value) {
+    value = value.toString();
+
+    if (EXPRESSION_RIGHT_TO_LEFT.test(value)) {
+        return 'rtl';
+    }
+
+    if (EXPRESSION_LEFT_TO_RIGHT.test(value)) {
+        return 'ltr';
+    }
+
+    return 'neutral';
+}
+
+module.exports = direction;
+
+});
+
+require.register("wooorm~retext-directionality@0.1.1", function (exports, module) {
+'use strict';
+
+var direction = require("wooorm~direction@0.1.0");
+
+function onchangedirectioninside(parent) {
+    var node, currentDirection, nodeDirection;
+
+    if (!parent) {
+        return;
+    }
+
+    node = parent.head;
+
+    while (node) {
+        nodeDirection = node.data.direction;
+
+        if (nodeDirection !== 'neutral') {
+            if (!currentDirection) {
+                currentDirection = nodeDirection;
+            } else if (nodeDirection !== currentDirection) {
+                currentDirection = 'neutral';
+                break;
+            }
+        }
+
+        node = node.next;
+    }
+
+    parent.data.direction = currentDirection || 'neutral';
+
+    onchangedirectioninside(parent.parent);
+}
+
+function oninsert() {
+    onchangedirectioninside(this.parent);
+}
+
+function onremove(previousParent) {
+    onchangedirectioninside(previousParent);
+}
+
+function onchangetext(value) {
+    var data = this.data,
+        oldDirection, newDirection;
+
+    oldDirection = data.direction;
+    newDirection = value ? direction(value) : 'neutral';
+
+    data.direction = newDirection;
+
+    if (newDirection !== oldDirection) {
+        onchangedirectioninside(this.parent);
+    }
+}
+
+function attach(retext) {
+    var Node = retext.parser.TextOM.Node;
+
+    Node.on('changetext', onchangetext);
+    Node.on('insert', oninsert);
+    Node.on('remove', onremove);
+}
+
+exports = module.exports = function () {};
+
+exports.attach = attach;
+
+});
+
 require.register("retext-directionality-gh-pages", function (exports, module) {
-var directionality = require("wooorm~retext-directionality@0.1.0");
+var directionality = require("wooorm~retext-directionality@0.1.1");
 var visit = require("wooorm~retext-visit@0.1.0");
 var dom = require("wooorm~retext-dom@0.1.1");
 var Retext = require("wooorm~retext@0.1.0-rc.6");
