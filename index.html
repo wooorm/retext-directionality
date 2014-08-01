@@ -1,25 +1,26 @@
 <!DOCTYPE html>
 <html>
-  <head>
-    <title>retext-directionality</title>
-    <style>
-    *[data-dir="neutral"] { background-color: rgba(255,255,255,0.85) }
-    *[dir="ltr"] { background-color: rgba(255,255,0,.25); }
-    *[dir="rtl"] { background-color: rgba(0,255,255,.25); }
-    p[dir="rtl"] { background-color: rgba(0,255,255,.75); }
-    p[dir="ltr"] { background-color: rgba(255,255,0,.75); }
-    p > span[dir="rtl"] { background-color: rgba(0,255,255,.5); }
-    p > span[dir="ltr"] { background-color: rgba(255,255,0,.5); }
-    </style>
-  </head>
-  <body class="directionality">
-    <h1>retext-directionality</h1>
-    <p>A quick demo of <a href="https://github.com/wooorm/retext-directionality">retext-directionality</a>.</p>
-    <p>Just paste (or write) some text in the text area below, and a color coded version will magically appear below it.</p>
-    <p>Please raise any issues on <a href="https://github.com/wooorm/retext-directionality/issues">Github</a>.</p>
-    <p><strong>Note!</strong> Left-to-right elements get a yellow background, right-to-left get cyan, and neutral gets white.</p>
-    <hr />
-    <textarea spellcheck="false" class="directionality__input" rows="20" cols="80" autofocus>Try it! It’s pretty cool!
+    <head>
+        <meta charset="utf-8" />
+        <title>retext-directionality</title>
+        <style>
+        *[data-dir="neutral"] { background-color: rgba(255,255,255,0.85) }
+        *[dir="ltr"] { background-color: rgba(255,255,0,.25); }
+        *[dir="rtl"] { background-color: rgba(0,255,255,.25); }
+        p[dir="rtl"] { background-color: rgba(0,255,255,.75); }
+        p[dir="ltr"] { background-color: rgba(255,255,0,.75); }
+        p > span[dir="rtl"] { background-color: rgba(0,255,255,.5); }
+        p > span[dir="ltr"] { background-color: rgba(255,255,0,.5); }
+        </style>
+    </head>
+    <body class="directionality">
+        <h1>retext-directionality</h1>
+        <p>A quick demo of <a href="https://github.com/wooorm/retext-directionality">retext-directionality</a>.</p>
+        <p>Just paste (or write) some text in the text area below, and a color coded version will magically appear below it.</p>
+        <p>Please raise any issues on <a href="https://github.com/wooorm/retext-directionality/issues">Github</a>.</p>
+        <p><strong>Note!</strong> Left-to-right elements get a yellow background, right-to-left get cyan, and neutral gets white.</p>
+        <hr />
+        <textarea spellcheck="false" class="directionality__input" rows="20" cols="80" autofocus>Try it! It’s pretty cool!
 
 This is a “סתמי” sentence.
 
@@ -28,7 +29,7 @@ This is a “סתמי” sentence.
 זהו עונש עברית. This is a bidi paragraph.
 
 This is an English (left-to-right) paragraph.</textarea>
-    <div class="directionality__output"></div>
-    <script src="build/build.js"></script>
-  </body>
+        <div class="directionality__output"></div>
+        <script src="build/build.js"></script>
+    </body>
 </html>
