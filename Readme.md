@@ -45,4 +45,4 @@ None, the plugin automatically detects the direction (either `"ltr"`, `"rtl"`, o
 
 ## License
 
-  MIT
+MIT © Titus Wormer
