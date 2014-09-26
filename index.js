@@ -1,9 +1,29 @@
 'use strict';
 
-var direction = require('direction');
+/**
+ * Dependencies.
+ */
 
-function onchangedirectioninside(parent) {
-    var node, currentDirection, nodeDirection;
+var direction;
+
+direction = require('direction');
+
+/**
+ * Define `directionality`.
+ */
+
+function directionality() {}
+
+/**
+ * Any change handler.
+ *
+ * @param {Node} parent
+ */
+
+function onchangeinside(parent) {
+    var node,
+        currentDirection,
+        nodeDirection;
 
     if (!parent) {
         return;
@@ -28,39 +48,78 @@ function onchangedirectioninside(parent) {
 
     parent.data.direction = currentDirection || 'neutral';
 
-    onchangedirectioninside(parent.parent);
+    onchangeinside(parent.parent);
 }
+
+/**
+ * Handler for `insert`.
+ *
+ * @this {Child}
+ */
 
 function oninsert() {
-    onchangedirectioninside(this.parent);
+    onchangeinside(this.parent);
 }
+
+/**
+ * Handler for `remove`.
+ *
+ * @param {Parent} previousParent
+ * @this {Child}
+ */
 
 function onremove(previousParent) {
-    onchangedirectioninside(previousParent);
+    onchangeinside(previousParent);
 }
 
-function onchangetext(value) {
-    var data = this.data,
-        oldDirection, newDirection;
+/**
+ * Handler for `changetext`.
+ *
+ * @param {string} value
+ * @this {Child}
+ */
 
-    oldDirection = data.direction;
+function onchangetext(value) {
+    var data,
+        previousDirection,
+        newDirection;
+
+    data = this.data;
+    previousDirection = data.direction;
+
     newDirection = value ? direction(value) : 'neutral';
 
-    data.direction = newDirection;
+    if (newDirection !== previousDirection) {
+        data.direction = newDirection;
 
-    if (newDirection !== oldDirection) {
-        onchangedirectioninside(this.parent);
+        onchangeinside(this.parent);
     }
 }
 
+/**
+ * Define `attach`.
+ *
+ * @param {Retext} retext
+ */
+
 function attach(retext) {
-    var Node = retext.parser.TextOM.Node;
+    var Node;
+
+    Node = retext.TextOM.Node;
 
     Node.on('changetext', onchangetext);
     Node.on('insert', oninsert);
     Node.on('remove', onremove);
 }
 
-exports = module.exports = function () {};
+/**
+ * Expose `attach`.
+ */
 
-exports.attach = attach;
+directionality.attach = attach;
+
+/**
+ * Expose `directionality`.
+ */
+
+module.exports = directionality;
