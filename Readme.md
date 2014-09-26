@@ -4,14 +4,19 @@
 
 ## Installation
 
-NPM:
+npm:
 ```sh
 $ npm install retext-directionality
 ```
 
-Component.js:
+Component:
 ```sh
 $ component install wooorm/retext-directionality
+```
+
+Bower:
+```sh
+$ bower install retext-directionality
 ```
 
 ## Usage
