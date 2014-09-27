@@ -52,21 +52,46 @@ require.define = function (name, exports) {
     exports: exports
   };
 };
-require.register("wooorm~retext-visit@0.1.0", function (exports, module) {
+require.register("wooorm~retext-visit@0.1.1", function (exports, module) {
 'use strict';
 
-exports = module.exports = function () {};
+/**
+ * Define `plugin`.
+ */
+
+function plugin() {}
+
+/**
+ * Invoke `callback` for every descendant of the
+ * operated on context.
+ *
+ * @param {function(Node): boolean?} callback - Visitor.
+ *   Stops visiting when the return value is `false`.
+ * @this {Node} Context to search in.
+ */
 
 function visit(callback) {
-    var node = this.head, next;
+    var node,
+        next;
+
+    node = this.head;
 
     while (node) {
-        // Allow for removal of the node in the callback.
+        /**
+         * Allow for removal of the node by `callback`.
+         */
+
         next = node.next;
 
         if (callback(node) === false) {
             return;
         }
+
+        /**
+         * If possible, invoke the node's own `visit`
+         *  method, otherwise call retext-visit's
+         * `visit` method.
+         */
 
         (node.visit || visit).call(node, callback);
 
@@ -74,37 +99,97 @@ function visit(callback) {
     }
 }
 
+/**
+ * Invoke `callback` for every descendant with a given
+ * `type` in the operated on context.
+ *
+ * @param {string} type - Type of a node.
+ * @param {function(Node): boolean?} callback - Visitor.
+ *   Stops visiting when the return value is `false`.
+ * @this {Node} Context to search in.
+ */
+
 function visitType(type, callback) {
-    var callbackWrapper = function (node) {
+    /**
+     * A wrapper for `callback` to check it the node's
+     * type property matches `type`.
+     *
+     * @param {node} type - Descendant.
+     * @return {*} Passes `callback`s return value
+     *   through.
+     */
+
+    function wrapper(node) {
         if (node.type === type) {
             return callback(node);
         }
-    };
-    this.visit.call(this, callbackWrapper);
+    }
+
+    this.visit(wrapper);
 }
 
 function attach(retext) {
-    var TextOM = retext.parser.TextOM,
-        parentPrototype = TextOM.Parent.prototype,
-        elementPrototype = TextOM.Element.prototype;
+    var TextOM,
+        parentPrototype,
+        elementPrototype;
+
+    TextOM = retext.TextOM;
+    parentPrototype = TextOM.Parent.prototype;
+    elementPrototype = TextOM.Element.prototype;
+
+    /**
+     * Expose `visit` and `visitType` on Parents.
+     *
+     * Due to multiple inheritance of Elements (Parent
+     * and Child), these methods are explicitly added.
+     */
 
     elementPrototype.visit = parentPrototype.visit = visit;
     elementPrototype.visitType = parentPrototype.visitType = visitType;
 }
 
-exports.attach = attach;
+/**
+ * Expose `attach`.
+ */
+
+plugin.attach = attach;
+
+/**
+ * Expose `plugin`.
+ */
+
+exports = module.exports = plugin;
 
 });
 
-require.register("wooorm~retext-dom@0.1.2", function (exports, module) {
+require.register("wooorm~retext-dom@0.1.3", function (exports, module) {
 'use strict';
 
-var visit = require("wooorm~retext-visit@0.1.0");
+var visit;
 
-/* istanbul ignore if: Running in the wrong environment */
+/**
+ * Module dependencies.
+ */
+
+visit = require("wooorm~retext-visit@0.1.1");
+
+/**
+ * Throw when not running in the browser (or a
+ * simulated browser environment).
+ */
+
+/* istanbul ignore if */
 if (typeof document !== 'object') {
-    throw new Error('Missing document object for retext-dom');
+    throw new Error(
+        'Missing document object for `retext-dom`.'
+    );
 }
+
+/**
+ * Event handler for an inserted TextOM node.
+ *
+ * @param {Node} node - Insertion.
+ */
 
 function oninsertinside(node) {
     node.parent.toDOMNode().insertBefore(node.toDOMNode(),
@@ -112,17 +197,46 @@ function oninsertinside(node) {
     );
 }
 
+/**
+ * Event handler for a removed TextOM node.
+ *
+ * @param {Node} node - Deletion.
+ */
+
 function onremoveinside(node, previousParent) {
     previousParent.toDOMNode().removeChild(node.toDOMNode());
 }
+
+/**
+ * Event handler for a value-change in a TextOM text
+ * node.
+ *
+ * @param {Node} node - Changed node.
+ */
 
 function onchangetextinside(node, newValue) {
     node.toDOMNode().textContent = newValue;
 }
 
+/**
+ * Get the DOM node-equivalent from a TextOM node.
+ *
+ * On initial run, a DOM node is created. If a
+ * `DOMTagName` property exists on the context
+ * a DOM text node is created. Otherwise, an
+ * DOM element is created of type `DOMTagName`.
+ *
+ *
+ * @this {Node}
+ * @return {Node} DOM node.
+ */
+
 function toDOMNode() {
-    var self = this,
-        DOMNode = self.DOMNode;
+    var self,
+        DOMNode;
+
+    self = this;
+    DOMNode = self.DOMNode;
 
     if (!DOMNode) {
         if (!self.DOMTagName) {
@@ -130,33 +244,66 @@ function toDOMNode() {
         } else {
             DOMNode = document.createElement(self.DOMTagName);
         }
+
+        /**
+         * Store DOM node on context.
+         */
+
         self.DOMNode = DOMNode;
+
+        /**
+         * Store context on DOM node.
+         */
+
         DOMNode.TextOMNode = self;
     }
 
     return DOMNode;
 }
 
+/**
+ * Define `plugin`.
+ *
+ * @param {Node} tree - TextOM node.
+ */
+
 function plugin(tree) {
     tree.on('insertinside', oninsertinside);
     tree.on('removeinside', onremoveinside);
     tree.on('changetextinside', onchangetextinside);
 
+    /**
+     * Make sure a parent DOM node, to attach to,
+     * exists.
+     */
+
     tree.toDOMNode();
 
     tree.visit(function (node) {
-        oninsertinside.call(tree, node);
+        oninsertinside(node);
 
         if (node instanceof node.TextOM.Text) {
-            onchangetextinside.call(tree, node, node.toString(), null);
+            onchangetextinside(node, node.toString(), null);
         }
     });
 }
 
+/**
+ * Define `attach`.
+ *
+ * @param {Retext} retext - Instance of Retext.
+ */
+
 function attach(retext) {
-    var TextOM = retext.parser.TextOM;
+    var TextOM;
+
+    /**
+     * Depend on `retext-visit`.
+     */
 
     retext.use(visit);
+
+    TextOM = retext.TextOM;
 
     TextOM.Node.prototype.toDOMNode = toDOMNode;
 
@@ -167,13 +314,21 @@ function attach(retext) {
     TextOM.Text.prototype.DOMTagName = null;
 }
 
+/**
+ * Expose `attach`.
+ */
+
 plugin.attach = attach;
 
-exports = module.exports = plugin;
+/**
+ * Expose `plugin`.
+ */
+
+module.exports = plugin;
 
 });
 
-require.register("wooorm~parse-latin@0.1.1", function (exports, module) {
+require.register("wooorm~parse-latin@0.1.3", function (exports, module) {
 /**!
  * parse-latin
  *
@@ -183,8 +338,11 @@ require.register("wooorm~parse-latin@0.1.1", function (exports, module) {
 'use strict';
 
 var EXPRESSION_ABBREVIATION_PREFIX, EXPRESSION_NEW_LINE,
+    EXPRESSION_MULTI_NEW_LINE,
     EXPRESSION_AFFIX_PUNCTUATION, EXPRESSION_INNER_WORD_PUNCTUATION,
+    EXPRESSION_INITIAL_WORD_PUNCTUATION, EXPRESSION_FINAL_WORD_PUNCTUATION,
     EXPRESSION_LOWER_INITIAL_EXCEPTION,
+    EXPRESSION_NUMERICAL, EXPRESSION_TERMINAL_MARKER,
     GROUP_ALPHABETIC, GROUP_ASTRAL, GROUP_CLOSING_PUNCTUATION,
     GROUP_COMBINING_DIACRITICAL_MARK, GROUP_COMBINING_NONSPACING_MARK,
     GROUP_FINAL_PUNCTUATION, GROUP_LETTER_LOWER, GROUP_NUMERICAL,
@@ -439,11 +597,17 @@ GROUP_ASTRAL = expand('D800-DBFFDC00-DFFF');
 /**
  * Expose interrobang, question-, and exclamation mark.
  *
+ * - Full stop;
+ * - Interrobang;
+ * - Question mark;
+ * - Exclamation mark;
+ * - Horizontal ellipsis.
+ *
  * @global
  * @private
  * @constant
  */
-GROUP_TERMINAL_MARKER = '\\.\\u203D?!';
+GROUP_TERMINAL_MARKER = '\\.\\u203D?!\\u2026';
 
 /**
  * Expose Unicode Pe (Punctuation, Close) category.
@@ -518,6 +682,7 @@ EXPRESSION_AFFIX_PUNCTUATION = new RegExp(
         GROUP_CLOSING_PUNCTUATION +
         GROUP_FINAL_PUNCTUATION +
         GROUP_TERMINAL_MARKER +
+        '"\'' +
     '])\\1*$'
 );
 
@@ -531,26 +696,91 @@ EXPRESSION_AFFIX_PUNCTUATION = new RegExp(
 EXPRESSION_NEW_LINE = /^(\r?\n|\r)+$/;
 
 /**
- * Matches punctuation which can be used to join two (sub?) words together.
+ * Matches a string consisting of two or more new line characters.
+ *
+ * @global
+ * @private
+ * @constant
+ */
+EXPRESSION_MULTI_NEW_LINE = /^(\r?\n|\r){2,}$/;
+
+/**
+ * Matches a sentence terminal marker, one or more of the following:
+ *
+ * - Full stop;
+ * - Interrobang;
+ * - Question mark;
+ * - Exclamation mark;
+ * - Horizontal ellipsis.
+ *
+ * @global
+ * @private
+ * @constant
+ */
+EXPRESSION_TERMINAL_MARKER = new RegExp(
+    '^([' + GROUP_TERMINAL_MARKER + ']+)$'
+);
+
+/**
+ * Matches punctuation part of the surrounding words.
  *
  * Includes:
  * - Hyphen-minus;
+ * - At sign;
+ * - Question mark;
+ * - Equals sign;
  * - full-stop;
  * - colon;
  * - Dumb single quote;
  * - Right single quote;
+ * - Ampersand;
  * - Soft hyphen;
  * - Hyphen;
  * - Non-breaking hyphen;
  * - Hyphenation point;
- * - Middle dot
+ * - Middle dot;
+ * - Slash (one or more);
+ * - Underscore (one or more).
  *
  * @global
  * @private
  * @constant
  */
 EXPRESSION_INNER_WORD_PUNCTUATION =
-    /^[-.:'\/\u2019\u00AD\u00B7\u2010\2011\u2027]$/;
+    /^([-@?=.:'\u2019&\u00AD\u00B7\u2010\2011\u2027]|[_\/]+)$/;
+
+/**
+ * Matches punctuation part of the next word.
+ *
+ * Includes:
+ * - Ampersand;
+ *
+ * @global
+ * @private
+ * @constant
+ */
+EXPRESSION_INITIAL_WORD_PUNCTUATION = /^&$/;
+
+/**
+ * Matches punctuation part of the previous word.
+ *
+ * Includes:
+ * - Hyphen-minus.
+ *
+ * @global
+ * @private
+ * @constant
+ */
+EXPRESSION_FINAL_WORD_PUNCTUATION = /^-$/;
+
+/**
+ * Matches a number.
+ *
+ * @global
+ * @private
+ * @constant
+ */
+EXPRESSION_NUMERICAL = new RegExp('^[' + GROUP_NUMERICAL + ']+$');
 
 /**
  * Matches an initial lower case letter.
@@ -699,6 +929,93 @@ function tokenizerFactory(context, options) {
 }
 
 /**
+ * Merges certain punctuation marks into their previous words.
+ *
+ * @param {Object} child
+ * @param {number} index
+ * @param {Object} parent
+ * @return {undefined|number} - Either void, or the next index to iterate
+ *     over.
+ *
+ * @global
+ * @private
+ */
+function mergeInitialWordPunctuation(child, index, parent) {
+    var children, next, hasPreviousWord, hasNextWord;
+
+    if (
+        child.type !== 'PunctuationNode' ||
+        !EXPRESSION_INITIAL_WORD_PUNCTUATION.test(tokenToString(child))
+    ) {
+        return;
+    }
+
+    children = parent.children;
+    next = children[index + 1];
+
+    hasPreviousWord = index !== 0 && children[index - 1].type === 'WordNode';
+    hasNextWord = next && next.type === 'WordNode';
+
+    if (hasPreviousWord || !hasNextWord) {
+        return;
+    }
+
+    /* Remove `child` from parent. */
+    children.splice(index, 1);
+
+    /* Add the punctuation mark at the start of the next node. */
+    next.children.unshift(child);
+
+    /* Next, iterate over the node at the previous position. */
+    return index - 1;
+}
+
+/**
+ * Merges certain punctuation marks into their preceding words.
+ *
+ * @param {Object} child
+ * @param {number} index
+ * @param {Object} parent
+ * @return {undefined|number} - Either void, or the next index to iterate
+ *     over.
+ *
+ * @global
+ * @private
+ */
+function mergeFinalWordPunctuation(child, index, parent) {
+    var children, prev, next;
+
+    if (
+        index === 0 ||
+        child.type !== 'PunctuationNode' ||
+        !EXPRESSION_FINAL_WORD_PUNCTUATION.test(tokenToString(child))
+    ) {
+        return;
+    }
+
+    children = parent.children;
+    prev = children[index - 1];
+    next = children[index + 1];
+
+    if (
+        (next && next.type === 'WordNode') ||
+        !(prev && prev.type === 'WordNode')
+    ) {
+        return;
+    }
+
+    /* Remove `child` from parent. */
+    children.splice(index, 1);
+
+    /* Add the punctuation mark at the end of the previous node. */
+    prev.children.push(child);
+
+    /* Next, iterate over the node *now* at the current position (which was
+     * the next node). */
+    return index;
+}
+
+/**
  * Merges two words surrounding certain punctuation marks.
  *
  * @param {Object} child
@@ -711,7 +1028,8 @@ function tokenizerFactory(context, options) {
  * @private
  */
 function mergeInnerWordPunctuation(child, index, parent) {
-    var children, prev, next;
+    var children, prev, otherChild,
+        iterator, tokens, queue;
 
     if (index === 0 || child.type !== 'PunctuationNode') {
         return;
@@ -719,46 +1037,59 @@ function mergeInnerWordPunctuation(child, index, parent) {
 
     children = parent.children;
     prev = children[index - 1];
-    next = children[index + 1];
 
-    if (
-        prev.type !== 'WordNode' || !next ||
-        (
-            next.type !== 'WordNode' &&
-            next.type !== 'PunctuationNode'
-        )
-    ) {
+    if (!prev || prev.type !== 'WordNode') {
         return;
     }
 
-    if (!EXPRESSION_INNER_WORD_PUNCTUATION.test(child.children[0].value)) {
-        return;
-    }
+    iterator = index - 1;
+    tokens = [];
+    queue = [];
 
-    /* e.g., C.I.A{.}\'s, where in curly brackets the child is depicted. */
-    if (next.type === 'PunctuationNode') {
-        if (
-            child.children[0].value !== '.' ||
-            !EXPRESSION_INNER_WORD_PUNCTUATION.test(next.children[0].value)
-        ) {
-            return;
+    /*
+     * - Is a token which is neither word nor inner word punctuation is
+     *   found, the loop is broken.
+     * - If a inner word punctuation mark is found, it's queued.
+     * - If a word is found, it's queued (and the queue stored and emptied).
+     */
+    while (children[++iterator]) {
+        otherChild = children[iterator];
+
+        if (otherChild.type === 'WordNode') {
+            tokens = tokens.concat(queue, otherChild.children);
+            queue = [];
+            continue;
         }
 
-        /* Remove `child` from parent. */
-        children.splice(index, 1);
+        if (
+            otherChild.type === 'PunctuationNode' &&
+            EXPRESSION_INNER_WORD_PUNCTUATION.test(tokenToString(otherChild))
+        ) {
+            queue.push(otherChild);
+            continue;
+        }
 
-        /* Add `child` to the previous children. */
-        prev.children.push(child);
-
-        return index - 1;
+        break;
     }
 
-    /* Remove `child` and `next` from parent. */
-    children.splice(index, 2);
+    /* If no tokens were found, exit. */
+    if (!tokens.length) {
+        return;
+    }
 
-    prev.children = prev.children.concat(child, next.children);
+    /* If there was a queue found, remove its length from iterator. */
+    if (queue.length) {
+        iterator -= queue.length;
+    }
 
-    return index - 1;
+    /* Remove every (one or more) inner-word punctuation marks, and children
+     * of words. */
+    children.splice(index, iterator - index);
+
+    /* Add all found tokens to prev.children */
+    prev.children = prev.children.concat(tokens);
+
+    return index;
 }
 
 /**
@@ -774,11 +1105,11 @@ function mergeInnerWordPunctuation(child, index, parent) {
  * @private
  */
 function mergeInitialisms(child, index, parent) {
-    var prev, children, length, iterator;
+    var prev, children, length, iterator, otherChild, isAllDigits, value;
 
     if (
         index === 0 || child.type !== 'PunctuationNode' ||
-        child.children[0].value !== '.'
+        tokenToString(child) !== '.'
     ) {
         return;
     }
@@ -799,22 +1130,27 @@ function mergeInitialisms(child, index, parent) {
     }
 
     iterator = length;
+    isAllDigits = true;
 
     while (children[--iterator]) {
+        otherChild = children[iterator];
+        value = tokenToString(otherChild);
+
         if (iterator % 2 === 0) {
             /* istanbul ignore if: TOSPEC: Currently not spec-able, but
              * future-friendly */
-            if (children[iterator].type !== 'TextNode') {
+            if (otherChild.type !== 'TextNode') {
                 return;
             }
 
-            if (children[iterator].value.length > 1) {
+            if (value.length > 1) {
                 return;
             }
-        } else if (
-            children[iterator].type !== 'PunctuationNode' ||
-            children[iterator].children[0].value !== '.'
-        ) {
+
+            if (!EXPRESSION_NUMERICAL.test(value)) {
+                isAllDigits = false;
+            }
+        } else if (otherChild.type !== 'PunctuationNode' || value !== '.') {
             /* istanbul ignore else: TOSPEC */
             if (iterator < length - 2) {
                 break;
@@ -822,6 +1158,10 @@ function mergeInitialisms(child, index, parent) {
                 return;
             }
         }
+    }
+
+    if (isAllDigits) {
+        return;
     }
 
     /* Remove `child` from parent. */
@@ -860,7 +1200,7 @@ function mergePrefixExceptions(child, index, parent) {
 
     if (
         !node || node.type !== 'PunctuationNode' ||
-        node.children[0].value !== '.'
+        tokenToString(node) !== '.'
     ) {
         return;
     }
@@ -870,7 +1210,7 @@ function mergePrefixExceptions(child, index, parent) {
     if (!node ||
         node.type !== 'WordNode' ||
         !EXPRESSION_ABBREVIATION_PREFIX.test(
-            node.children[0].value.toLowerCase()
+            tokenToString(node).toLowerCase()
         )
     ) {
         return;
@@ -923,7 +1263,7 @@ function mergeAffixExceptions(child, index, parent) {
     if (
         !node ||
         node.type !== 'PunctuationNode' ||
-        node.children[0].value !== ','
+        !(tokenToString(node) === ',' || tokenToString(node) === ';')
     ) {
         return;
     }
@@ -1000,6 +1340,129 @@ function makeFinalWhiteSpaceAndSourceSiblings(child, index, parent) {
 }
 
 /**
+ * Merges non-terminal marker full stops into, if available, the previous
+ * word, or if available, the next word.
+ *
+ * @param {Object} child
+ * @param {number} index
+ * @return {undefined}
+ *
+ * @global
+ * @private
+ */
+function mergeRemainingFullStops(child, index) {
+    var children = child.children,
+        iterator = children.length,
+        grandchild, prev, next, hasFoundDelimiter;
+
+    hasFoundDelimiter = false;
+
+    while (children[--iterator]) {
+        grandchild = children[iterator];
+
+        if (grandchild.type !== 'PunctuationNode') {
+            /* This is a sentence without terminal marker, so we 'fool' the
+             * code to make it think we have found one. */
+            if (grandchild.type === 'WordNode') {
+                hasFoundDelimiter = true;
+            }
+            continue;
+        }
+
+        /* Exit when this token is not a terminal marker. */
+        if (!EXPRESSION_TERMINAL_MARKER.test(tokenToString(grandchild))) {
+            continue;
+        }
+
+        /* Exit when this is the first terminal marker found (starting at the
+         * end), so it should not be merged. */
+        if (!hasFoundDelimiter) {
+            hasFoundDelimiter = true;
+            continue;
+        }
+
+        /* Only merge a single full stop. */
+        if (tokenToString(grandchild) !== '.') {
+            continue;
+        }
+
+        prev = children[iterator - 1];
+        next = children[iterator + 1];
+
+        if (prev && prev.type === 'WordNode') {
+            /* Exit when the full stop is followed by a space and another,
+             * full stop, such as: `{.} .` */
+            if (
+                next && next.type === 'WhiteSpaceNode' &&
+                children[iterator + 2] &&
+                children[iterator + 2].type === 'PunctuationNode' &&
+                tokenToString(children[iterator + 2]) === '.'
+            ) {
+                continue;
+            }
+
+            /* Remove `child` from parent. */
+            children.splice(iterator, 1);
+
+            /* Add the punctuation mark at the end of the previous node. */
+            prev.children.push(grandchild);
+
+            iterator--;
+        } else if (next && next.type === 'WordNode') {
+            /* Remove `child` from parent. */
+            children.splice(iterator, 1);
+
+            /* Add the punctuation mark at the start of the next node. */
+            next.children.unshift(grandchild);
+        }
+    }
+}
+
+/**
+ * Breaks a sentence if a node containing two or more white spaces is found.
+ *
+ * @param {Object} child
+ * @param {number} index
+ * @param {Object} parent
+ * @return {undefined|number} - Either void, or the next index to iterate
+ *     over.
+ *
+ * @global
+ * @private
+ */
+function breakImplicitSentences(child, index, parent) {
+    if (child.type !== 'SentenceNode') {
+        return;
+    }
+
+    var children = child.children,
+        iterator = -1,
+        length = children.length,
+        node;
+
+    while (++iterator < length) {
+        node = children[iterator];
+
+        if (node.type !== 'WhiteSpaceNode') {
+            continue;
+        }
+
+        if (!EXPRESSION_MULTI_NEW_LINE.test(tokenToString(node))) {
+            continue;
+        }
+
+        child.children = children.slice(0, iterator);
+
+        parent.children.splice(index + 1, 0, node, {
+            'type' : 'SentenceNode',
+            'children' : children.slice(iterator + 1)
+        });
+
+        return index + 2;
+    }
+}
+
+/**
  * Merges a sentence into its previous sentence, when the sentence starts
  * with a lower case letter.
  *
@@ -1030,9 +1493,7 @@ function mergeInitialLowerCaseLetterSentences(child, index, parent) {
             return;
         } else if (node.type === 'WordNode') {
             if (
-                !EXPRESSION_LOWER_INITIAL_EXCEPTION.test(
-                    node.children[0].value
-                )
+                !EXPRESSION_LOWER_INITIAL_EXCEPTION.test(tokenToString(node))
             ) {
                 return;
             }
@@ -1117,7 +1578,7 @@ function mergeSourceLines(child, index, parent) {
     if (
         !child ||
         child.type !== 'WhiteSpaceNode' ||
-        !EXPRESSION_NEW_LINE.test(child.children[0].value)
+        !EXPRESSION_NEW_LINE.test(tokenToString(child))
     ) {
         return;
     }
@@ -1135,7 +1596,7 @@ function mergeSourceLines(child, index, parent) {
 
         if (
             sibling.type === 'WhiteSpaceNode' &&
-            EXPRESSION_NEW_LINE.test(sibling.children[0].value)
+            EXPRESSION_NEW_LINE.test(tokenToString(sibling))
         ) {
             break;
         }
@@ -1177,7 +1638,7 @@ function mergeAffixPunctuation(child, index, parent) {
 
     if (
         children[0].type !== 'PunctuationNode' ||
-        !EXPRESSION_AFFIX_PUNCTUATION.test(children[0].children[0].value)
+        !EXPRESSION_AFFIX_PUNCTUATION.test(tokenToString(children[0]))
     ) {
         return;
     }
@@ -1204,6 +1665,46 @@ function removeEmptyNodes(child, index, parent) {
         parent.children.splice(index, 1);
         return index > 0 ? index - 1 : 0;
     }
+}
+
+/**
+ * Returns a function which in turn returns nodes of the given type.
+ *
+ * @param {string} type
+ * @return {Function} - A function which creates nodes of the given type.
+ * @global
+ * @private
+ */
+function createNodeFactory(type) {
+    return function (value) {
+        return {
+            'type' : type,
+            'children' : [
+                this.tokenizeText(value)
+            ]
+        };
+    };
+}
+
+/**
+ * Returns a function which in turn returns text nodes of the given type.
+ *
+ * @param {string} type
+ * @return {Function} - A function which creates text nodes of the given type.
+ * @global
+ * @private
+ */
+function createTextNodeFactory(type) {
+    return function (value) {
+        if (value === null || value === undefined) {
+            value = '';
+        }
+
+        return {
+            'type' : type,
+            'value' : String(value)
+        };
+    };
 }
 
 /**
@@ -1340,31 +1841,77 @@ parseLatinPrototype.classifier = function (value) {
      * space.
      */
     if (this.EXPRESSION_WHITE_SPACE.test(value)) {
-        type = 'WhiteSpaceNode';
+        type = 'WhiteSpace';
     /*
      * Otherwise, if the token contains just word characters, classify it as
      * a word.
      */
     } else if (this.EXPRESSION_WORD.test(value)) {
-        type = 'WordNode';
+        type = 'Word';
     /*
      * Otherwise, classify it as punctuation.
      */
     } else {
-        type = 'PunctuationNode';
+        type = 'Punctuation';
     }
 
     /* Return a token. */
-    return {
-        'type' : type,
-        'children' : [
-            {
-                'type' : 'TextNode',
-                'value' : value
-            }
-        ]
-    };
+    return this['tokenize' + type](value);
 };
+
+/**
+ * Returns a source node, with its value set to the given value.
+ *
+ * @param {string} value
+ * @return {Object} - The SourceNode.
+ * @private
+ * @memberof ParseLatin#
+ */
+parseLatinPrototype.tokenizeSource = createTextNodeFactory('SourceNode');
+
+/**
+ * Returns a text node, with its value set to the given value.
+ *
+ * @param {string} value
+ * @return {Object} - The TextNode.
+ * @private
+ * @memberof ParseLatin#
+ */
+parseLatinPrototype.tokenizeText = createTextNodeFactory('TextNode');
+
+/**
+ * Returns a word node, with its children set to a single text node, its
+ * value set to the given value.
+ *
+ * @param {string} value
+ * @return {Object} - The WordNode.
+ * @private
+ * @memberof ParseLatin#
+ */
+parseLatinPrototype.tokenizeWord = createNodeFactory('WordNode');
+
+/**
+ * Returns a white space node, with its children set to a single text node,
+ * its value set to the given value.
+ *
+ * @param {string} value
+ * @return {Object} - The whiteSpaceNode.
+ * @private
+ * @memberof ParseLatin#
+ */
+parseLatinPrototype.tokenizeWhiteSpace = createNodeFactory('WhiteSpaceNode');
+
+/**
+ * Returns a punctuation node, with its children set to a single text node,
+ * its value set to the given value.
+ *
+ * @param {string} value
+ * @return {Object} - The PunctuationNode.
+ * @private
+ * @memberof ParseLatin#
+ */
+parseLatinPrototype.tokenizePunctuation =
+    createNodeFactory('PunctuationNode');
 
 /**
  * Tokenize natural Latin-script language into a sentence token.
@@ -1391,6 +1938,8 @@ parseLatinPrototype.tokenizeSentence = function (value) {
 };
 
 parseLatinPrototype.tokenizeSentenceModifiers = [
+    mergeInitialWordPunctuation,
+    mergeFinalWordPunctuation,
     mergeInnerWordPunctuation,
     mergeSourceLines,
     mergeInitialisms
@@ -1409,15 +1958,17 @@ parseLatinPrototype.tokenizeParagraph = tokenizerFactory(ParseLatin, {
     'name' : 'tokenizeParagraph',
     'tokenizer' : 'tokenizeSentence',
     'type' : 'ParagraphNode',
-    'delimiter' : new RegExp('^([' + GROUP_TERMINAL_MARKER + ']+)$'),
+    'delimiter' : EXPRESSION_TERMINAL_MARKER,
     'modifiers' : [
-        mergePrefixExceptions,
-        mergeAffixExceptions,
         mergeNonWordSentences,
         mergeAffixPunctuation,
         mergeInitialLowerCaseLetterSentences,
+        mergePrefixExceptions,
+        mergeAffixExceptions,
+        mergeRemainingFullStops,
         makeInitialWhiteSpaceAndSourceSiblings,
         makeFinalWhiteSpaceAndSourceSiblings,
+        breakImplicitSentences,
         removeEmptyNodes
     ]
 });
@@ -2533,35 +3084,568 @@ module.exports = TextOMConstructor;
 
 });
 
-require.register("wooorm~retext@0.1.1", function (exports, module) {
-'use strict';
+require.register("visionmedia~co@3.1.0", function (exports, module) {
 
-var TextOMConstructor = require("wooorm~textom@0.1.1"),
-    ParseLatin = require("wooorm~parse-latin@0.1.1");
+/**
+ * slice() reference.
+ */
 
-function fromAST(TextOM, ast) {
-    var iterator = -1,
-        children, node, data, attribute;
+var slice = Array.prototype.slice;
 
-    node = new TextOM[ast.type]();
+/**
+ * Expose `co`.
+ */
 
-    if ('children' in ast) {
-        iterator = -1;
-        children = ast.children;
+module.exports = co;
 
-        while (children[++iterator]) {
-            node.append(fromAST(TextOM, children[iterator]));
-        }
+/**
+ * Wrap the given generator `fn` and
+ * return a thunk.
+ *
+ * @param {Function} fn
+ * @return {Function}
+ * @api public
+ */
+
+function co(fn) {
+  var isGenFun = isGeneratorFunction(fn);
+
+  return function (done) {
+    var ctx = this;
+
+    // in toThunk() below we invoke co()
+    // with a generator, so optimize for
+    // this case
+    var gen = fn;
+
+    // we only need to parse the arguments
+    // if gen is a generator function.
+    if (isGenFun) {
+      var args = slice.call(arguments), len = args.length;
+      var hasCallback = len && 'function' == typeof args[len - 1];
+      done = hasCallback ? args.pop() : error;
+      gen = fn.apply(this, args);
     } else {
-        node.fromString(ast.value);
+      done = done || error;
     }
 
+    next();
+
+    // #92
+    // wrap the callback in a setImmediate
+    // so that any of its errors aren't caught by `co`
+    function exit(err, res) {
+      setImmediate(function(){
+        done.call(ctx, err, res);
+      });
+    }
+
+    function next(err, res) {
+      var ret;
+
+      // multiple args
+      if (arguments.length > 2) res = slice.call(arguments, 1);
+
+      // error
+      if (err) {
+        try {
+          ret = gen.throw(err);
+        } catch (e) {
+          return exit(e);
+        }
+      }
+
+      // ok
+      if (!err) {
+        try {
+          ret = gen.next(res);
+        } catch (e) {
+          return exit(e);
+        }
+      }
+
+      // done
+      if (ret.done) return exit(null, ret.value);
+
+      // normalize
+      ret.value = toThunk(ret.value, ctx);
+
+      // run
+      if ('function' == typeof ret.value) {
+        var called = false;
+        try {
+          ret.value.call(ctx, function(){
+            if (called) return;
+            called = true;
+            next.apply(ctx, arguments);
+          });
+        } catch (e) {
+          setImmediate(function(){
+            if (called) return;
+            called = true;
+            next(e);
+          });
+        }
+        return;
+      }
+
+      // invalid
+      next(new TypeError('You may only yield a function, promise, generator, array, or object, '
+        + 'but the following was passed: "' + String(ret.value) + '"'));
+    }
+  }
+}
+
+/**
+ * Convert `obj` into a normalized thunk.
+ *
+ * @param {Mixed} obj
+ * @param {Mixed} ctx
+ * @return {Function}
+ * @api private
+ */
+
+function toThunk(obj, ctx) {
+
+  if (isGeneratorFunction(obj)) {
+    return co(obj.call(ctx));
+  }
+
+  if (isGenerator(obj)) {
+    return co(obj);
+  }
+
+  if (isPromise(obj)) {
+    return promiseToThunk(obj);
+  }
+
+  if ('function' == typeof obj) {
+    return obj;
+  }
+
+  if (isObject(obj) || Array.isArray(obj)) {
+    return objectToThunk.call(ctx, obj);
+  }
+
+  return obj;
+}
+
+/**
+ * Convert an object of yieldables to a thunk.
+ *
+ * @param {Object} obj
+ * @return {Function}
+ * @api private
+ */
+
+function objectToThunk(obj){
+  var ctx = this;
+  var isArray = Array.isArray(obj);
+
+  return function(done){
+    var keys = Object.keys(obj);
+    var pending = keys.length;
+    var results = isArray
+      ? new Array(pending) // predefine the array length
+      : new obj.constructor();
+    var finished;
+
+    if (!pending) {
+      setImmediate(function(){
+        done(null, results)
+      });
+      return;
+    }
+
+    // prepopulate object keys to preserve key ordering
+    if (!isArray) {
+      for (var i = 0; i < pending; i++) {
+        results[keys[i]] = undefined;
+      }
+    }
+
+    for (var i = 0; i < keys.length; i++) {
+      run(obj[keys[i]], keys[i]);
+    }
+
+    function run(fn, key) {
+      if (finished) return;
+      try {
+        fn = toThunk(fn, ctx);
+
+        if ('function' != typeof fn) {
+          results[key] = fn;
+          return --pending || done(null, results);
+        }
+
+        fn.call(ctx, function(err, res){
+          if (finished) return;
+
+          if (err) {
+            finished = true;
+            return done(err);
+          }
+
+          results[key] = res;
+          --pending || done(null, results);
+        });
+      } catch (err) {
+        finished = true;
+        done(err);
+      }
+    }
+  }
+}
+
+/**
+ * Convert `promise` to a thunk.
+ *
+ * @param {Object} promise
+ * @return {Function}
+ * @api private
+ */
+
+function promiseToThunk(promise) {
+  return function(fn){
+    promise.then(function(res) {
+      fn(null, res);
+    }, fn);
+  }
+}
+
+/**
+ * Check if `obj` is a promise.
+ *
+ * @param {Object} obj
+ * @return {Boolean}
+ * @api private
+ */
+
+function isPromise(obj) {
+  return obj && 'function' == typeof obj.then;
+}
+
+/**
+ * Check if `obj` is a generator.
+ *
+ * @param {Mixed} obj
+ * @return {Boolean}
+ * @api private
+ */
+
+function isGenerator(obj) {
+  return obj && 'function' == typeof obj.next && 'function' == typeof obj.throw;
+}
+
+/**
+ * Check if `obj` is a generator function.
+ *
+ * @param {Mixed} obj
+ * @return {Boolean}
+ * @api private
+ */
+
+function isGeneratorFunction(obj) {
+  return obj && obj.constructor && 'GeneratorFunction' == obj.constructor.name;
+}
+
+/**
+ * Check for plain object.
+ *
+ * @param {Mixed} val
+ * @return {Boolean}
+ * @api private
+ */
+
+function isObject(val) {
+  return val && Object == val.constructor;
+}
+
+/**
+ * Throw `err` in a new stack.
+ *
+ * This is used when co() is invoked
+ * without supplying a callback, which
+ * should only be for demonstrational
+ * purposes.
+ *
+ * @param {Error} err
+ * @api private
+ */
+
+function error(err) {
+  if (!err) return;
+  setImmediate(function(){
+    throw err;
+  });
+}
+
+});
+
+require.register("matthewmueller~wrap-fn@0.1.1", function (exports, module) {
+/**
+ * Module Dependencies
+ */
+
+var slice = [].slice;
+var co = require("visionmedia~co@3.1.0");
+var noop = function(){};
+
+/**
+ * Export `wrap-fn`
+ */
+
+module.exports = wrap;
+
+/**
+ * Wrap a function to support
+ * sync, async, and gen functions.
+ *
+ * @param {Function} fn
+ * @param {Function} done
+ * @return {Function}
+ * @api public
+ */
+
+function wrap(fn, done) {
+  done = done || noop;
+
+  return function() {
+    var args = slice.call(arguments);
+    var ctx = this;
+
+    // done
+    if (!fn) {
+      return done.apply(ctx, [null].concat(args));
+    }
+
+    // async
+    if (fn.length > args.length) {
+      return fn.apply(ctx, args.concat(done));
+    }
+
+    // generator
+    if (generator(fn)) {
+      return co(fn).apply(ctx, args.concat(done));
+    }
+
+    // sync
+    return sync(fn, done).apply(ctx, args);
+  }
+}
+
+/**
+ * Wrap a synchronous function execution.
+ *
+ * @param {Function} fn
+ * @param {Function} done
+ * @return {Function}
+ * @api private
+ */
+
+function sync(fn, done) {
+  return function () {
+    var ret;
+
+    try {
+      ret = fn.apply(this, arguments);
+    } catch (err) {
+      return done(err);
+    }
+
+    if (promise(ret)) {
+      ret.then(function (value) { done(null, value); }, done);
+    } else {
+      ret instanceof Error ? done(ret) : done(null, ret);
+    }
+  }
+}
+
+/**
+ * Is `value` a generator?
+ *
+ * @param {Mixed} value
+ * @return {Boolean}
+ * @api private
+ */
+
+function generator(value) {
+  return value
+    && value.constructor
+    && 'GeneratorFunction' == value.constructor.name;
+}
+
+
+/**
+ * Is `value` a promise?
+ *
+ * @param {Mixed} value
+ * @return {Boolean}
+ * @api private
+ */
+
+function promise(value) {
+  return value && 'function' == typeof value.then;
+}
+
+});
+
+require.register("segmentio~ware@1.2.0", function (exports, module) {
+/**
+ * Module Dependencies
+ */
+
+var slice = [].slice;
+var wrap = require("matthewmueller~wrap-fn@0.1.1");
+
+/**
+ * Expose `Ware`.
+ */
+
+module.exports = Ware;
+
+/**
+ * Initialize a new `Ware` manager, with optional `fns`.
+ *
+ * @param {Function or Array or Ware} fn (optional)
+ */
+
+function Ware (fn) {
+  if (!(this instanceof Ware)) return new Ware(fn);
+  this.fns = [];
+  if (fn) this.use(fn);
+}
+
+/**
+ * Use a middleware `fn`.
+ *
+ * @param {Function or Array or Ware} fn
+ * @return {Ware}
+ */
+
+Ware.prototype.use = function (fn) {
+  if (fn instanceof Ware) {
+    return this.use(fn.fns);
+  }
+
+  if (fn instanceof Array) {
+    for (var i = 0, f; f = fn[i++];) this.use(f);
+    return this;
+  }
+
+  this.fns.push(fn);
+  return this;
+};
+
+/**
+ * Run through the middleware with the given `args` and optional `callback`.
+ *
+ * @param {Mixed} args...
+ * @param {Function} callback (optional)
+ * @return {Ware}
+ */
+
+Ware.prototype.run = function () {
+  var fns = this.fns;
+  var ctx = this;
+  var i = 0;
+  var last = arguments[arguments.length - 1];
+  var done = 'function' == typeof last && last;
+  var args = done
+    ? slice.call(arguments, 0, arguments.length - 1)
+    : slice.call(arguments);
+
+  // next step
+  function next (err) {
+    if (err) return done(err);
+    var fn = fns[i++];
+    var arr = slice.call(args);
+
+    if (!fn) {
+      return done && done.apply(null, [null].concat(args));
+    }
+
+    wrap(fn, next).apply(ctx, arr);
+  }
+
+  next();
+
+  return this;
+};
+
+});
+
+require.register("wooorm~retext@0.2.0-rc.3", function (exports, module) {
+'use strict';
+
+var TextOMConstructor,
+    ParseLatin,
+    Ware,
+    has;
+
+/**
+ * Module dependencies.
+ */
+
+TextOMConstructor = require("wooorm~textom@0.1.1");
+ParseLatin = require("wooorm~parse-latin@0.1.3");
+Ware = require("segmentio~ware@1.2.0");
+
+/**
+ * Cached, fast, secure existence test.
+ */
+
+has = Object.prototype.hasOwnProperty;
+
+/**
+ * Transform a concrete syntax tree into a tree constructed
+ * from a given object model.
+ *
+ * @param {Object} TextOM - the object model.
+ * @param {Object} cst - the concrete syntax tree to
+ *   transform.
+ * @return {Node} the node constructed from the
+ *   CST and the object model.
+ */
+
+function fromCST(TextOM, cst) {
+    var index,
+        node,
+        children,
+        data,
+        attribute;
+
+    node = new TextOM[cst.type]();
+
+    if ('children' in cst) {
+        index = -1;
+        children = cst.children;
+
+        while (children[++index]) {
+            node.append(fromCST(TextOM, children[index]));
+        }
+    } else {
+        node.fromString(cst.value);
+    }
+
+    /**
+     * Currently, `data` properties are not really
+     * specified or documented. Therefore, the following
+     * branch is ignored by Istanbul.
+     *
+     * The idea is that plugins and parsers can each
+     * attach data to nodes, in a similar fashion to the
+     * DOMs dataset, which can be stringified and parsed
+     * back and forth between the concrete syntax tree
+     * and the node.
+     */
+
     /* istanbul ignore if: TODO, Untestable, will change soon. */
-    if ('data' in ast) {
-        data = ast.data;
+    if ('data' in cst) {
+        data = cst.data;
 
         for (attribute in data) {
-            if (data.hasOwnProperty(attribute)) {
+            if (has.call(data, attribute)) {
                 node.data[attribute] = data[attribute];
             }
         }
@@ -2570,149 +3654,214 @@ function fromAST(TextOM, ast) {
     return node;
 }
 
-function useImmediately(rootNode, use) {
-    return function (plugin) {
-        var self = this,
-            length = self.plugins.length;
-
-        use.apply(self, arguments);
-
-        if (length !== self.plugins.length) {
-            plugin(rootNode, self);
-        }
-
-        return self;
-    };
-}
-
 /**
- * Define `Retext`. Exported above, and used to instantiate a new
- * `Retext`.
+ * Construct an instance of `Retext`.
  *
- * @param {Function?} parser - the parser to use. Defaults to parse-latin.
- * @public
+ * @param {Function?} parser - the parser to use. Defaults
+ *   to a new instance of `parse-latin`.
  * @constructor
  */
+
 function Retext(parser) {
-    var self = this;
+    var self,
+        TextOM;
 
     if (!parser) {
         parser = new ParseLatin();
     }
 
+    self = this;
+    TextOM = new TextOMConstructor();
+
+    self.ware = new Ware();
     self.parser = parser;
-    self.TextOM = parser.TextOM = new TextOMConstructor();
-    self.TextOM.parser = parser;
-    self.plugins = [];
+    self.TextOM = TextOM;
+
+    /**
+     * Expose `TextOM` on `parser`, and vice versa.
+     */
+
+    parser.TextOM = TextOM;
+    TextOM.parser = parser;
 }
 
 /**
- * `Retext#use` takes a plugin-a humble function-and when the parse
- * method of the Retext instance is called, the plugin will be called
- * with the parsed tree, and the retext instance as arguments.
+ * Attaches `plugin`: a humble function.
  *
- * Note that, during the parsing stage, when the `use` method is called
- * by a plugin, the nested plugin is immediately called, before continuing
- * on with its parent plugin.
+ * When `parse` or `run` is invoked, `plugin` is
+ * invoked with `node` and a `retext` instance.
  *
- * @param {Function} plugin - the plugin to call when parsing.
- * @param {Function?} plugin.attach - called only once with a Retext
- *                                    instance. If you're planning on
- *                                    modifying TextOM or a parser, do it
- *                                    in this method.
+ * If `plugin` contains asynchronous functionality, it
+ * should accept a third argument (`next`) and invoke
+ * it on completion.
+ *
+ * `plugin.attach` is invoked with a `retext` instance
+ * when attached, enabling `plugin` to depend on other
+ * plugins.
+ *
+ * Code to initialize `plugin` should go into its `attach`
+ * method, such as functionality to modify the object model
+ * (TextOM), the parser (e.g., `parse-latin`), or the
+ * `retext` instance. `plugin.attach` is invoked when
+ * `plugin` is attached to a `retext` instance.
+ *
+ * @param {function(Node, Retext, Function?)} plugin -
+ *   functionality to analyze and manipulate a node.
+ * @param {function(Retext)} plugin.attach - functionality
+ *   to initialize `plugin`.
  * @return this
- * @public
  */
+
 Retext.prototype.use = function (plugin) {
+    var self;
+
     if (typeof plugin !== 'function') {
-        throw new TypeError('Illegal invocation: \'' + plugin +
-            '\' is not a valid argument for \'Retext.prototype.use\'');
+        throw new TypeError(
+            'Illegal invocation: `' + plugin + '` ' +
+            'is not a valid argument for `Retext#use(plugin)`'
+        );
     }
 
-    var self = this,
-        plugins = self.plugins;
+    self = this;
 
-    if (plugins.indexOf(plugin) === -1) {
+    if (self.ware.fns.indexOf(plugin) === -1) {
+        self.ware.use(plugin);
+
         if (plugin.attach) {
             plugin.attach(self);
         }
-
-        plugins.push(plugin);
     }
 
     return self;
 };
 
 /**
- * `Retext#parse` takes a source to be given (and parsed) by the parser.
- * Then, `parse` iterates over all plugins, and allows them to modify the
- * TextOM tree created by the parser.
+ * Transform a given value into a node, applies attached
+ * plugins to the node, and invokes `done` with either an
+ * error (first argument) or the transformed node (second
+ * argument).
  *
- * @param {String?} source - The source to convert.
- * @return {Node} - A RootNode containing the tokenised source.
- * @public
+ * @param {string?} value - The value to transform.
+ * @param {function(Error, Node)} done - Callback to
+ *   invoke when the transformations have completed.
+ * @return this
  */
-Retext.prototype.parse = function (source) {
-    var self = this,
-        rootNode = fromAST(self.TextOM, self.parser.tokenizeRoot(source));
 
-    self.applyPlugins(rootNode);
+Retext.prototype.parse = function (value, done) {
+    var self,
+        cst;
 
-    return rootNode;
-};
-
-/**
- * `Retext#applyPlugins` applies the plugins bound to the retext instance to a
- * given tree.
- *
- * Note that, during the parsing stage, when the `use` plugin is called
- * by a plugin, the nested plugin is immediately called, before continuing
- * on with its parent plugin.
- *
- * @param {Node} tree - The tree to apply plugins to.
- * @public
- */
-Retext.prototype.applyPlugins = function (tree) {
-    var self = this,
-        plugins = self.plugins.concat(),
-        iterator = -1,
-        use = self.use;
-
-    self.use = useImmediately(tree, use);
-
-    while (plugins[++iterator]) {
-        plugins[iterator](tree, this);
+    if (typeof done !== 'function') {
+        throw new TypeError(
+            'Illegal invocation: `' + done + '` ' +
+            'is not a valid argument for `Retext#parse(value, done)`.\n' +
+            'This breaking change occurred in 0.2.0-rc.1, see GitHub for ' +
+            'more information.'
+        );
     }
 
-    self.use = use;
+    self = this;
+
+    cst = self.parser.parse(value);
+
+    self.run(fromCST(self.TextOM, cst), done);
+
+    return self;
 };
 
 /**
- * Expose `Retext`. Used to instantiate a new Retext object.
+ * Applies attached plugins to `node` and invokes `done`
+ * with either an error (first argument) or the transformed
+ * `node` (second argument).
+ *
+ * @param {Node} node - The node to apply attached
+ *   plugins to.
+ * @param {function(Error, Node)} done - Callback to
+ *   invoke when the transformations have completed.
+ * @return this
  */
-exports = module.exports = Retext;
+
+Retext.prototype.run = function (node, done) {
+    var self;
+
+    if (typeof done !== 'function') {
+        throw new TypeError(
+            'Illegal invocation: `' + done + '` ' +
+            'is not a valid argument for ' +
+            '`Retext#run(node, done)`.\n' +
+            'This breaking change occurred in 0.2.0-rc.1, see GitHub for ' +
+            'more information.'
+        );
+    }
+
+    self = this;
+
+    self.ware.run(node, self, done);
+
+    return self;
+};
+
+/**
+ * Expose `Retext`.
+ */
+
+module.exports = Retext;
 
 });
 
-require.register("wooorm~direction@0.1.0", function (exports, module) {
+require.register("wooorm~direction@0.1.1", function (exports, module) {
 'use strict';
 
-var GROUP_LEFT_TO_RIGHT, GROUP_RIGHT_TO_LEFT,
-    EXPRESSION_LEFT_TO_RIGHT, EXPRESSION_RIGHT_TO_LEFT;
+var GROUP_LEFT_TO_RIGHT,
+    GROUP_RIGHT_TO_LEFT,
+    EXPRESSION_LEFT_TO_RIGHT,
+    EXPRESSION_RIGHT_TO_LEFT;
+
+/**
+ * Character ranges of left-to-right characters.
+ */
 
 GROUP_LEFT_TO_RIGHT = 'A-Za-z\u00C0-\u00D6\u00D8-\u00F6' +
     '\u00F8-\u02B8\u0300-\u0590\u0800-\u1FFF\u200E\u2C00-\uFB1C' +
     '\uFE00-\uFE6F\uFEFD-\uFFFF';
 
+/**
+ * Character ranges of right-to-left characters.
+ */
+
 GROUP_RIGHT_TO_LEFT = '\u0591-\u07FF\uFB1D-\uFDFD\uFE70-\uFEFC';
+
+/**
+ * Expression to match a left-to-right string.
+ *
+ * Matches the start of a string, followed by zero or
+ * more non-right-to-left characters, followed by a
+ * left-to-right character.
+ */
 
 EXPRESSION_LEFT_TO_RIGHT = new RegExp(
     '^[^' + GROUP_RIGHT_TO_LEFT + ']*[' + GROUP_LEFT_TO_RIGHT + ']'
 );
 
+/**
+ * Expression to match a right-to-left string.
+ *
+ * Matches the start of a string, followed by zero or
+ * more non-left-to-right characters, followed by a
+ * right-to-left character.
+ */
+
 EXPRESSION_RIGHT_TO_LEFT = new RegExp(
     '^[^' + GROUP_LEFT_TO_RIGHT + ']*[' + GROUP_RIGHT_TO_LEFT + ']'
 );
+
+/**
+ * Detect the direction of text.
+ *
+ * @param {string} value - value to stringify and check.
+ * @return {string} - One of `"rtl"`, `"ltr"`, or
+ *   `"neutral"`.
+ */
 
 function direction(value) {
     value = value.toString();
@@ -2728,17 +3877,41 @@ function direction(value) {
     return 'neutral';
 }
 
+/**
+ * Expose `direction`.
+ */
+
 module.exports = direction;
 
 });
 
-require.register("wooorm~retext-directionality@0.1.1", function (exports, module) {
+require.register("wooorm~retext-directionality@0.1.2", function (exports, module) {
 'use strict';
 
-var direction = require("wooorm~direction@0.1.0");
+/**
+ * Dependencies.
+ */
 
-function onchangedirectioninside(parent) {
-    var node, currentDirection, nodeDirection;
+var direction;
+
+direction = require("wooorm~direction@0.1.1");
+
+/**
+ * Define `directionality`.
+ */
+
+function directionality() {}
+
+/**
+ * Any change handler.
+ *
+ * @param {Node} parent
+ */
+
+function onchangeinside(parent) {
+    var node,
+        currentDirection,
+        nodeDirection;
 
     if (!parent) {
         return;
@@ -2763,50 +3936,89 @@ function onchangedirectioninside(parent) {
 
     parent.data.direction = currentDirection || 'neutral';
 
-    onchangedirectioninside(parent.parent);
+    onchangeinside(parent.parent);
 }
+
+/**
+ * Handler for `insert`.
+ *
+ * @this {Child}
+ */
 
 function oninsert() {
-    onchangedirectioninside(this.parent);
+    onchangeinside(this.parent);
 }
+
+/**
+ * Handler for `remove`.
+ *
+ * @param {Parent} previousParent
+ * @this {Child}
+ */
 
 function onremove(previousParent) {
-    onchangedirectioninside(previousParent);
+    onchangeinside(previousParent);
 }
 
-function onchangetext(value) {
-    var data = this.data,
-        oldDirection, newDirection;
+/**
+ * Handler for `changetext`.
+ *
+ * @param {string} value
+ * @this {Child}
+ */
 
-    oldDirection = data.direction;
+function onchangetext(value) {
+    var data,
+        previousDirection,
+        newDirection;
+
+    data = this.data;
+    previousDirection = data.direction;
+
     newDirection = value ? direction(value) : 'neutral';
 
-    data.direction = newDirection;
+    if (newDirection !== previousDirection) {
+        data.direction = newDirection;
 
-    if (newDirection !== oldDirection) {
-        onchangedirectioninside(this.parent);
+        onchangeinside(this.parent);
     }
 }
 
+/**
+ * Define `attach`.
+ *
+ * @param {Retext} retext
+ */
+
 function attach(retext) {
-    var Node = retext.parser.TextOM.Node;
+    var Node;
+
+    Node = retext.TextOM.Node;
 
     Node.on('changetext', onchangetext);
     Node.on('insert', oninsert);
     Node.on('remove', onremove);
 }
 
-exports = module.exports = function () {};
+/**
+ * Expose `attach`.
+ */
 
-exports.attach = attach;
+directionality.attach = attach;
+
+/**
+ * Expose `directionality`.
+ */
+
+module.exports = directionality;
 
 });
 
 require.register("retext-directionality-gh-pages", function (exports, module) {
-var directionality = require("wooorm~retext-directionality@0.1.1");
-var visit = require("wooorm~retext-visit@0.1.0");
-var dom = require("wooorm~retext-dom@0.1.2");
-var Retext = require("wooorm~retext@0.1.1");
+var directionality = require("wooorm~retext-directionality@0.1.2");
+var visit = require("wooorm~retext-visit@0.1.1");
+var dom = require("wooorm~retext-dom@0.1.3");
+var Retext = require("wooorm~retext@0.2.0-rc.3");
 var retext = new Retext().use(visit).use(directionality).use(dom);
 
 var inputElement = document.getElementsByTagName('textarea')[0];
@@ -2819,22 +4031,26 @@ function makeSmarter(value) {
         currentDOMTree.parentNode.removeChild(currentDOMTree);
     }
 
-    currentTree = retext.parse(value);
+    retext.parse(value, function (err, tree) {
+        if (err) throw err;
 
-    currentTree.visit(function (node) {
-        if (!node.DOMTagName || !node.data.direction) {
-            return
-        }
+        currentTree = tree;
 
-        if (node.data.direction !== 'neutral') {
-            node.toDOMNode().setAttribute('dir', node.data.direction);
-        } else {
-            node.toDOMNode().setAttribute('data-dir', node.data.direction);
-        }
+        currentTree.visit(function (node) {
+            if (!node.DOMTagName || !node.data.direction) {
+                return
+            }
+
+            if (node.data.direction !== 'neutral') {
+                node.toDOMNode().setAttribute('dir', node.data.direction);
+            } else {
+                node.toDOMNode().setAttribute('data-dir', node.data.direction);
+            }
+        });
+
+        currentDOMTree = currentTree.toDOMNode();
+        outputElement.appendChild(currentDOMTree);
     });
-
-    currentDOMTree = currentTree.toDOMNode();
-    outputElement.appendChild(currentDOMTree);
 }
 
 inputElement.addEventListener('input', function (event) {

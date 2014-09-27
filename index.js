@@ -14,22 +14,26 @@ function makeSmarter(value) {
         currentDOMTree.parentNode.removeChild(currentDOMTree);
     }
 
-    currentTree = retext.parse(value);
+    retext.parse(value, function (err, tree) {
+        if (err) throw err;
 
-    currentTree.visit(function (node) {
-        if (!node.DOMTagName || !node.data.direction) {
-            return
-        }
+        currentTree = tree;
 
-        if (node.data.direction !== 'neutral') {
-            node.toDOMNode().setAttribute('dir', node.data.direction);
-        } else {
-            node.toDOMNode().setAttribute('data-dir', node.data.direction);
-        }
+        currentTree.visit(function (node) {
+            if (!node.DOMTagName || !node.data.direction) {
+                return
+            }
+
+            if (node.data.direction !== 'neutral') {
+                node.toDOMNode().setAttribute('dir', node.data.direction);
+            } else {
+                node.toDOMNode().setAttribute('data-dir', node.data.direction);
+            }
+        });
+
+        currentDOMTree = currentTree.toDOMNode();
+        outputElement.appendChild(currentDOMTree);
     });
-
-    currentDOMTree = currentTree.toDOMNode();
-    outputElement.appendChild(currentDOMTree);
 }
 
 inputElement.addEventListener('input', function (event) {
