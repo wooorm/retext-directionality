@@ -10,7 +10,7 @@ var directionality,
     Retext,
     assert;
 
-directionality = require('..');
+directionality = require('./');
 visit = require('retext-visit');
 content = require('retext-content');
 Retext = require('retext');
