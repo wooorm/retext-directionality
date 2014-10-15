@@ -79,7 +79,7 @@ describe('directionality()', function () {
         it('should process each `WordNode`', function () {
             var index;
 
-            tree.visitType(tree.WORD_NODE, function (node) {
+            tree.visit(tree.WORD_NODE, function (node) {
                 assert(node.data.direction === 'ltr');
             });
 
@@ -91,7 +91,7 @@ describe('directionality()', function () {
 
             index = -1;
 
-            tree.visitType(tree.WORD_NODE, function (node) {
+            tree.visit(tree.WORD_NODE, function (node) {
                 node[0].fromString(leftToRightWords[++index]);
 
                 assert(node.data.direction === 'ltr');
@@ -99,7 +99,7 @@ describe('directionality()', function () {
         });
 
         it('should process each `Parent`', function () {
-            tree.visitType(tree.WORD_NODE, function (node) {
+            tree.visit(tree.WORD_NODE, function (node) {
                 var parent;
 
                 parent = node.parent;
@@ -115,7 +115,7 @@ describe('directionality()', function () {
         it('should set each `direction` to `null` when a `WordNode` (no ' +
             'longer?) has a value',
             function () {
-                tree.visitType(tree.WORD_NODE, function (node) {
+                tree.visit(tree.WORD_NODE, function (node) {
                     /**
                      * We use the less secure `fromString`
                      * on a TextNode here to test for
@@ -139,7 +139,7 @@ describe('directionality()', function () {
 
             index = -1;
 
-            tree.visitType(tree.WORD_NODE, function (node) {
+            tree.visit(tree.WORD_NODE, function (node) {
                 node.replaceContent(leftToRightWords[++index]);
 
                 assert(node.data.direction === 'ltr');
@@ -147,7 +147,7 @@ describe('directionality()', function () {
 
             index = -1;
 
-            tree.visitType(tree.WORD_NODE, function (node) {
+            tree.visit(tree.WORD_NODE, function (node) {
                 var parent,
                     shouldBeDirection;
 
@@ -180,7 +180,7 @@ describe('directionality()', function () {
 
                 parent = tree.head.head;
 
-                tree.visitType(tree.TEXT_NODE, function (node) {
+                tree.visit(tree.TEXT_NODE, function (node) {
                     if (node.parent.type === node.WORD_NODE) {
                         node.remove();
                     }
