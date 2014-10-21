@@ -181,9 +181,7 @@ describe('directionality()', function () {
                 parent = tree.head.head;
 
                 tree.visit(tree.TEXT_NODE, function (node) {
-                    if (node.parent.type === node.WORD_NODE) {
-                        node.remove();
-                    }
+                    node.remove();
                 });
 
                 while (parent) {
