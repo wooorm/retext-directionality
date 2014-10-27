@@ -1,6 +1,6 @@
 {
   "name": "retext-directionality",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "description": "Detect directionality (left-to-right, right-to-left) in Retext",
   "license": "MIT",
   "keywords": [
