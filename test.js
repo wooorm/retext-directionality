@@ -67,10 +67,6 @@ describe('directionality()', function () {
         assert(typeof directionality === 'function');
     });
 
-    it('should expose an `attach` method', function () {
-        assert(typeof directionality.attach === 'function');
-    });
-
     retext.parse(sentence, function (err, tree) {
         it('should not throw', function (done) {
             done(err);

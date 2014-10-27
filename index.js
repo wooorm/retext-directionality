@@ -9,12 +9,6 @@ var direction;
 direction = require('direction');
 
 /**
- * Define `directionality`.
- */
-
-function directionality() {}
-
-/**
  * Any change handler.
  *
  * @param {Node} parent
@@ -97,12 +91,12 @@ function onchangetext(value) {
 }
 
 /**
- * Define `attach`.
+ * Define `directionality`.
  *
  * @param {Retext} retext
  */
 
-function attach(retext) {
+function directionality(retext) {
     var Node;
 
     Node = retext.TextOM.Node;
@@ -111,12 +105,6 @@ function attach(retext) {
     Node.on('insert', oninsert);
     Node.on('remove', onremove);
 }
-
-/**
- * Expose `attach`.
- */
-
-directionality.attach = attach;
 
 /**
  * Expose `directionality`.
