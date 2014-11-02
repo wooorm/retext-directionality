@@ -3,10 +3,10 @@
   "private": true,
   "repository": "wooorm/retext-directionality",
   "dependencies": {
-    "wooorm/retext-directionality": "0.1.2",
-    "wooorm/retext-dom": "^0.1.3",
-    "wooorm/retext": "^0.2.0-rc.2",
-    "wooorm/retext-visit": "^0.1.1"
+    "wooorm/retext-directionality": "0.1.5",
+    "wooorm/retext-dom": "^0.2.3",
+    "wooorm/retext": "^0.3.0",
+    "wooorm/retext-visit": "^0.2.2"
   },
   "scripts": [
     "index.js"
