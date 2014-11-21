@@ -10,7 +10,7 @@
     "retext"
   ],
   "dependencies": {
-    "wooorm/direction": "^0.1.1"
+    "wooorm/direction": "^0.1.0"
   },
   "repository": "wooorm/retext-directionality",
   "scripts" : [

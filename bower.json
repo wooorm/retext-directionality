@@ -10,7 +10,7 @@
     "retext"
   ],
   "dependencies": {
-    "direction": "^0.1.1"
+    "direction": "^0.1.0"
   },
   "repository": {
     "type": "git",
