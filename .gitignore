@@ -1,5 +1,5 @@
-node_modules
 .DS_Store
-coverage
-node_modules
-components
+node_modules/
+bower_components/
+coverage/
+components/
