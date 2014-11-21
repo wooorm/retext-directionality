@@ -1,25 +1,45 @@
-var directionality = require('retext-directionality');
-var visit = require('retext-visit');
-var dom = require('retext-dom');
-var Retext = require('retext');
-var retext = new Retext().use(visit).use(directionality).use(dom);
+/**
+ * Dependencies.
+ */
 
-var inputElement = document.getElementsByTagName('textarea')[0];
-var formElement = document.getElementsByTagName('form')[0];
-var outputElement = document.getElementsByTagName('div')[0];
-var currentDOMTree, currentTree;
+var Retext = require('wooorm/retext@0.4.0');
+var directionality = require('wooorm/retext-directionality@0.1.6');
+var dom = require('wooorm/retext-dom@0.2.3');
+var visit = require('wooorm/retext-visit@0.2.2');
 
-function makeSmarter(value) {
-    if (currentDOMTree) {
-        currentDOMTree.parentNode.removeChild(currentDOMTree);
+/**
+ * Retext.
+ */
+
+var retext = new Retext()
+    .use(dom)
+    .use(visit)
+    .use(directionality);
+
+/**
+ * DOM elements.
+ */
+
+var $input = document.getElementsByTagName('textarea')[0];
+var $output = document.getElementsByTagName('div')[0];
+
+/**
+ * Events
+ */
+
+var tree;
+
+function oninputchange() {
+    if (tree) {
+        tree.toDOMNode().parentNode.removeChild(tree.toDOMNode());
     }
 
-    retext.parse(value, function (err, tree) {
+    retext.parse($input.value, function (err, root) {
         if (err) throw err;
 
-        currentTree = tree;
+        tree = root;
 
-        currentTree.visit(function (node) {
+        tree.visit(function (node) {
             if (!node.DOMTagName || !node.data.direction) {
                 return
             }
@@ -31,13 +51,10 @@ function makeSmarter(value) {
             }
         });
 
-        currentDOMTree = currentTree.toDOMNode();
-        outputElement.appendChild(currentDOMTree);
+        $output.appendChild(tree.toDOMNode());
     });
 }
 
-inputElement.addEventListener('input', function (event) {
-    makeSmarter(inputElement.value);
-});
+$input.addEventListener('input', oninputchange);
 
-makeSmarter(inputElement.value);
+oninputchange();
