@@ -22,37 +22,46 @@ $ bower install retext-directionality
 ## Usage
 
 ```js
-var Retext = require('retext'),
-    visit = require('retext-visit'),
-    directionality = require('retext-directionality'),
-    retext
+var Retext = require('retext');
+var visit = require('retext-visit');
+var inspect = require('retext-inspect');
+var directionality = require('retext-directionality');
 
-retext = new Retext()
+var retext = new Retext()
+    .use(inspect)
     .use(visit)
     .use(directionality);
 
 retext.parse('A simple, anglais, بسيطة.', function (err, tree) {
-    tree.visitType(tree.WORD_NODE, function (node) {
-        console.log(node.toString(), node.data.direction);
-    });
+    /* Log the tree, note the data attributes: */
+    console.log(tree);
     /**
-     * "A", "ltr"
-     * "simple", "ltr"
-     * "anglais", "ltr"
-     * "بسيطة", "rtl"
-     *
+     * RootNode[1] [data={"direction":"neutral"}]
+     * └─ ParagraphNode[1] [data={"direction":"neutral"}]
+     *    └─ SentenceNode[10] [data={"direction":"neutral"}]
+     *       ├─ WordNode[1] [data={"direction":"ltr"}]
+     *       │  └─ TextNode: 'A' [data={"direction":"ltr"}]
+     *       ├─ WhiteSpaceNode: ' ' [data={"direction":"neutral"}]
+     *       ├─ WordNode[1] [data={"direction":"ltr"}]
+     *       │  └─ TextNode: 'simple' [data={"direction":"ltr"}]
+     *       ├─ PunctuationNode: ',' [data={"direction":"neutral"}]
+     *       ├─ WhiteSpaceNode: ' ' [data={"direction":"neutral"}]
+     *       ├─ WordNode[1] [data={"direction":"ltr"}]
+     *       │  └─ TextNode: 'anglais' [data={"direction":"ltr"}]
+     *       ├─ PunctuationNode: ',' [data={"direction":"neutral"}]
+     *       ├─ WhiteSpaceNode: ' ' [data={"direction":"neutral"}]
+     *       ├─ WordNode[1] [data={"direction":"rtl"}]
+     *       │  └─ TextNode: 'بسيطة' [data={"direction":"rtl"}]
+     *       └─ PunctuationNode: '.' [data={"direction":"neutral"}]
      */
-
-    console.log(tree.toString(), tree.data.direction);
-    /* "A simple, anglais, بسيطة". neutral */
 });
 ```
 
-This example also uses [retext-visit](https://github.com/wooorm/retext-visit).
-
 ## API
 
-None, the plugin automatically detects the direction (either `"ltr"`, `"rtl"`, or `"neutral"`) of each text node when its created, changed, or removed, and stores that direction in `data.direction` on the node. If every text node inside a parent has the same (or neutral) direction, the parent has the same direction, otherwise, the parent has a neutral direction.
+None, **retext-directionality** automatically detects the direction of each node (using **[wooorm/direction](https://github.com/wooorm/direction)**, either `"ltr"`, `"rtl"`, or `"neutral"`), and stores the direction in `wordNode.data.direction`.
+
+All parents (such as words, sentences, paragraphs, root) also receive a `direction` data property (`parent.data.direction`): If every [Text](https://github.com/wooorm/textom#textomtextvalue-nlcsttext) inside a parent has the same (or neutral) direction, the parent has the same direction, otherwise, the parent has a neutral direction.
 
 ## License
 
