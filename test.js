@@ -4,16 +4,18 @@
  * Dependencies.
  */
 
-var directionality,
+var Retext,
+    directionality,
     visit,
+    inspect,
     content,
-    Retext,
     assert;
 
+Retext = require('retext');
 directionality = require('./');
 visit = require('retext-visit');
 content = require('retext-content');
-Retext = require('retext');
+inspect = require('retext-inspect');
 assert = require('assert');
 
 /**
@@ -54,6 +56,7 @@ rightToLeftWords = 'أ الجملة الانجليزية بسيطة'.split(' ');
 var retext;
 
 retext = new Retext()
+    .use(inspect)
     .use(visit)
     .use(content)
     .use(directionality);
