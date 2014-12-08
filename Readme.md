@@ -65,4 +65,4 @@ All parents (such as words, sentences, paragraphs, root) also receive a `directi
 
 ## License
 
-MIT © Titus Wormer
+MIT © [Titus Wormer](http://wooorm.com)
