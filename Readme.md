@@ -59,9 +59,9 @@ retext.parse('A simple, anglais, بسيطة.', function (err, tree) {
 
 ## API
 
-None, **retext-directionality** automatically detects the direction of each node (using **[wooorm/direction](https://github.com/wooorm/direction)**, either `"ltr"`, `"rtl"`, or `"neutral"`), and stores the direction in `wordNode.data.direction`.
+None, **retext-directionality** automatically detects the direction of each [`Text`](https://github.com/wooorm/textom#textomtextvalue-nlcsttext) (using **[wooorm/direction](https://github.com/wooorm/direction)**), either `"ltr"`, `"rtl"`, or `"neutral"`), and stores the direction in `node.data.direction`.
 
-All parents (such as words, sentences, paragraphs, root) also receive a `direction` data property (`parent.data.direction`): If every [Text](https://github.com/wooorm/textom#textomtextvalue-nlcsttext) inside a parent has the same (or neutral) direction, the parent has the same direction, otherwise, the parent has a neutral direction.
+All parents (such as words, sentences, paragraphs, root) also receive a `direction` property (`parent.data.direction`): If every [`Text`](https://github.com/wooorm/textom#textomtextvalue-nlcsttext) inside a parent has the same (or neutral) direction, the parent has the same direction, otherwise, the parent has a neutral direction.
 
 ## License
 
