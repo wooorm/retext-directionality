@@ -63,6 +63,20 @@ None, **retext-directionality** automatically detects the direction of each [`Te
 
 All parents (such as words, sentences, paragraphs, root) also receive a `direction` property (`parent.data.direction`): If every [`Text`](https://github.com/wooorm/textom#textomtextvalue-nlcsttext) inside a parent has the same (or neutral) direction, the parent has the same direction, otherwise, the parent has a neutral direction.
 
+## Performance
+
+On a MacBook Air, **retext** performs about 27% slower with **retext-directionality**.
+
+```
+           retext w/o retext-directionality
+  228 op/s » A paragraph (5 sentences, 100 words)
+   25 op/s » A section (10 paragraphs, 50 sentences, 1,000 words)
+
+           retext w/ retext-directionality
+  166 op/s » A paragraph (5 sentences, 100 words)
+   18 op/s » A section (10 paragraphs, 50 sentences, 1,000 words)
+```
+
 ## License
 
 MIT © [Titus Wormer](http://wooorm.com)
