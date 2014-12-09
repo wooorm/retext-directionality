@@ -1,4 +1,13 @@
 
+n.n.n / 2014-12-09
+==================
+
+ * Add benchmark
+ * Fix wording in `Readme.md`
+ * Refactor npm script targets in `package.json`
+ * Add link to personal website to copyright in `Readme.md`
+ * Update eslint, retext
+
 0.1.6 / 2014-11-21
 ==================
 
