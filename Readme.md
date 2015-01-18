@@ -4,19 +4,19 @@
 
 ## Installation
 
-npm:
+[npm](https://docs.npmjs.com/cli/install):
 
 ```bash
 $ npm install retext-directionality
 ```
 
-Component:
+[Component.js](https://github.com/componentjs/component):
 
 ```bash
 $ component install wooorm/retext-directionality
 ```
 
-Bower:
+[Bower](http://bower.io/#install-packages):
 
 ```bash
 $ bower install retext-directionality
@@ -38,7 +38,7 @@ var retext = new Retext()
 retext.parse('A simple, anglais, بسيطة.', function (err, tree) {
     /* Log the tree, note the data attributes: */
     console.log(tree);
-    /**
+    /*
      * RootNode[1] [data={"direction":"neutral"}]
      * └─ ParagraphNode[1] [data={"direction":"neutral"}]
      *    └─ SentenceNode[10] [data={"direction":"neutral"}]
