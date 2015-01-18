@@ -3,14 +3,14 @@
 var Retext,
     directionality;
 
-/**
+/*
  * Dependencies.
  */
 
 Retext = require('retext');
 directionality = require('./');
 
-/**
+/*
  * Dependencies.
  */
 
@@ -20,7 +20,7 @@ var retext,
 retext = new Retext();
 retextWithDirectionality = new Retext().use(directionality);
 
-/**
+/*
  * Test data: A (big?) article (w/ 100 paragraphs, 500
  * sentences, 10,000 words);
  *

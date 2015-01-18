@@ -1,6 +1,6 @@
 'use strict';
 
-/**
+/*
  * Dependencies.
  */
 
@@ -13,7 +13,6 @@ direction = require('direction');
  *
  * @param {Node} parent
  */
-
 function onchangeinside(parent) {
     var node,
         currentDirection,
@@ -50,7 +49,6 @@ function onchangeinside(parent) {
  *
  * @this {Child}
  */
-
 function oninsert() {
     onchangeinside(this.parent);
 }
@@ -61,7 +59,6 @@ function oninsert() {
  * @param {Parent} previousParent
  * @this {Child}
  */
-
 function onremove(previousParent) {
     onchangeinside(previousParent);
 }
@@ -72,7 +69,6 @@ function onremove(previousParent) {
  * @param {string} value
  * @this {Child}
  */
-
 function onchangetext(value) {
     var data,
         previousDirection,
@@ -95,7 +91,6 @@ function onchangetext(value) {
  *
  * @param {Retext} retext
  */
-
 function directionality(retext) {
     var Node;
 
@@ -106,7 +101,7 @@ function directionality(retext) {
     Node.on('remove', onremove);
 }
 
-/**
+/*
  * Expose `directionality`.
  */
 

@@ -1,6 +1,6 @@
 'use strict';
 
-/**
+/*
  * Dependencies.
  */
 
@@ -18,7 +18,7 @@ content = require('retext-content');
 inspect = require('retext-inspect');
 assert = require('assert');
 
-/**
+/*
  * Fixtures.
  */
 
@@ -26,19 +26,19 @@ var sentence,
     leftToRightWords,
     rightToLeftWords;
 
-/**
+/*
  * Base English sentence.
  */
 
 sentence = 'A simple, english, sentence.';
 
-/**
+/*
  * French, baguette!
  */
 
 leftToRightWords = 'Un simple anglais phrase'.split(' ');
 
-/**
+/*
  * Arabic.
  *
  * I'm no good at Aabic---but Google says this is the
@@ -49,7 +49,7 @@ leftToRightWords = 'Un simple anglais phrase'.split(' ');
 
 rightToLeftWords = 'أ الجملة الانجليزية بسيطة'.split(' ');
 
-/**
+/*
  * Retext
  */
 
@@ -61,7 +61,7 @@ retext = new Retext()
     .use(content)
     .use(directionality);
 
-/**
+/*
  * Tests
  */
 
@@ -82,7 +82,7 @@ describe('directionality()', function () {
                 assert(node.data.direction === 'ltr');
             });
 
-            /**
+            /*
              * Cover some optimizations: when a node's
              * direction does not change, there is no
              * need to re-process parents.
@@ -115,7 +115,7 @@ describe('directionality()', function () {
             'longer?) has a value',
             function () {
                 tree.visit(tree.WORD_NODE, function (node) {
-                    /**
+                    /*
                      * We use the less secure `fromString`
                      * on a TextNode here to test for
                      * `changetext` events.
@@ -131,7 +131,7 @@ describe('directionality()', function () {
         it('should re-process each `WordNode` and `Parent`', function () {
             var index;
 
-            /**
+            /*
              * First set some left-to-rigth words, so we
              * can check for `neutral` changes.
              */
@@ -154,7 +154,7 @@ describe('directionality()', function () {
 
                 assert(node.data.direction === 'rtl');
 
-                /**
+                /*
                  * When all words are `rtl`, the parent
                  * should reflext this instead of showing
                  * `neutral`.
