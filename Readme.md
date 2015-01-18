@@ -5,23 +5,26 @@
 ## Installation
 
 npm:
-```sh
+
+```bash
 $ npm install retext-directionality
 ```
 
 Component:
-```sh
+
+```bash
 $ component install wooorm/retext-directionality
 ```
 
 Bower:
-```sh
+
+```bash
 $ bower install retext-directionality
 ```
 
 ## Usage
 
-```js
+```javascript
 var Retext = require('retext');
 var visit = require('retext-visit');
 var inspect = require('retext-inspect');
@@ -67,7 +70,7 @@ All parents (such as words, sentences, paragraphs, root) also receive a `directi
 
 On a MacBook Air, **retext** performs about 27% slower with **retext-directionality**.
 
-```
+```text
            retext w/o retext-directionality
   228 op/s » A paragraph (5 sentences, 100 words)
    25 op/s » A section (10 paragraphs, 50 sentences, 1,000 words)
