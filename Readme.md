@@ -22,6 +22,12 @@ $ component install wooorm/retext-directionality
 $ bower install retext-directionality
 ```
 
+[Duo](http://duojs.org/#getting-started):
+
+```javascript
+var directionality = require('wooorm/retext-directionality');
+```
+
 ## Usage
 
 ```javascript
