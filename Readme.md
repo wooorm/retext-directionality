@@ -88,4 +88,4 @@ On a MacBook Air, **retext** performs about 27% slower with **retext-directional
 
 ## License
 
-MIT © [Titus Wormer](http://wooorm.com)
+[MIT](LICENSE) © [Titus Wormer](http://wooorm.com)
