@@ -2,10 +2,10 @@
  * Dependencies.
  */
 
-var Retext = require('wooorm/retext@0.5.0-rc.1');
-var directionality = require('wooorm/retext-directionality@0.1.7');
-var dom = require('wooorm/retext-dom@0.3.0');
-var visit = require('wooorm/retext-visit@0.2.3');
+var Retext = require('wooorm/retext@0.5.0');
+var directionality = require('wooorm/retext-directionality@0.1.8');
+var dom = require('wooorm/retext-dom@0.3.1');
+var visit = require('wooorm/retext-visit@0.2.5');
 
 /**
  * Retext.
