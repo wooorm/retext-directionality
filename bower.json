@@ -1,6 +1,6 @@
 {
   "name": "retext-directionality",
-  "main": "index.js",
+  "main": "retext-directionality.js",
   "description": "Detect directionality (left-to-right, right-to-left) in Retext",
   "license": "MIT",
   "keywords": [
@@ -9,9 +9,6 @@
     "ltr",
     "retext"
   ],
-  "dependencies": {
-    "direction": "^0.1.0"
-  },
   "repository": {
     "type": "git",
     "url": "https://github.com/wooorm/retext-directionality.git"

@@ -1,108 +1,146 @@
+/**
+ * @author Titus Wormer
+ * @copyright 2014-2015 Titus Wormer
+ * @license MIT
+ * @module retext:directionality
+ * @fileoverview Detect directionality with Retext.
+ */
+
 'use strict';
 
 /*
  * Dependencies.
  */
 
-var direction;
-
-direction = require('direction');
+var direction = require('direction');
+var visit = require('unist-util-visit');
+var nlcstToString = require('nlcst-to-string');
 
 /**
- * Any change handler.
+ * Patch a `direction` property on `node`s with a value.
  *
- * @param {Node} parent
+ * @param {NLCSTNode} node - Node.
+ * @param {string} direction - `'rtl'`, `'ltr'`, or `'neutral'`.
  */
-function onchangeinside(parent) {
-    var node,
-        currentDirection,
-        nodeDirection;
+function patch(node, direction) {
+    var data = node.data || {};
 
-    if (!parent) {
-        return;
+    data.direction = direction;
+
+    node.data = data;
+}
+
+/**
+ * Patch a `direction` property on `node`s with a value.
+ *
+ * @param {NLCSTNode} node - Node.
+ */
+function any(node) {
+    if ('value' in node) {
+        patch(node, direction(nlcstToString(node)));
+    }
+}
+
+/**
+ * Factory to gather parents and patch them based on their
+ * childrens directionality.
+ *
+ * @return {function(node, index, parent)} - Can be passed
+ *   to `visit`.
+ */
+function concatenateFactory() {
+    var queue = [];
+
+    /**
+     * Gather a parent if not already gathered..
+     *
+     * @param {NLCSTChildNode} node - Child.
+     * @param {number} index - Position of `node` in
+     *   `parent`.
+     * @param {NLCSTParentNode} parent - Parent of `child`.
+     */
+    function concatenate(node, index, parent) {
+        if (parent && queue.indexOf(parent) === -1) {
+            queue.push(parent);
+        }
     }
 
-    node = parent.head;
+    /**
+     * Patch one parent. Expects all its children to have a
+     * direction property already when applicable.
+     *
+     * @param {NLCSTParentNode} node - Parent
+     * @return {string} - `'rtl'`, `'ltr'`, or `'neutral'`.
+     */
+    function one(node) {
+        var children = node.children;
+        var length = children.length;
+        var index = -1;
+        var child;
+        var direction;
+        var current;
 
-    while (node) {
-        nodeDirection = node.data.direction;
+        while (++index < length) {
+            child = children[index];
+            direction = child.data && child.data.direction;
 
-        if (nodeDirection !== 'neutral') {
-            if (!currentDirection) {
-                currentDirection = nodeDirection;
-            } else if (nodeDirection !== currentDirection) {
-                currentDirection = 'neutral';
-                break;
+            if (direction && direction !== 'neutral') {
+                if (!current) {
+                    current = direction;
+                } else if (direction !== current) {
+                    current = 'neutral';
+
+                    break;
+                }
             }
         }
 
-        node = node.next;
+        return current || 'neutral';
     }
 
-    parent.data.direction = currentDirection || 'neutral';
+    /**
+     * Patch all parents in reverse order: this means
+     * that first the last and deepest parent is invoked
+     * up to the first and highest parent.
+     */
+    function done() {
+        var index = queue.length;
 
-    onchangeinside(parent.parent);
-}
-
-/**
- * Handler for `insert`.
- *
- * @this {Child}
- */
-function oninsert() {
-    onchangeinside(this.parent);
-}
-
-/**
- * Handler for `remove`.
- *
- * @param {Parent} previousParent
- * @this {Child}
- */
-function onremove(previousParent) {
-    onchangeinside(previousParent);
-}
-
-/**
- * Handler for `changetext`.
- *
- * @param {string} value
- * @this {Child}
- */
-function onchangetext(value) {
-    var data,
-        previousDirection,
-        newDirection;
-
-    data = this.data;
-    previousDirection = data.direction;
-
-    newDirection = value ? direction(value) : 'neutral';
-
-    if (newDirection !== previousDirection) {
-        data.direction = newDirection;
-
-        onchangeinside(this.parent);
+        while (index--) {
+            patch(queue[index], one(queue[index]));
+        }
     }
+
+    concatenate.done = done;
+
+    return concatenate;
 }
 
 /**
- * Define `directionality`.
+ * Transformer.
  *
- * @param {Retext} retext
+ * @param {NLCSTNode} cst - Syntax tree.
  */
-function directionality(retext) {
-    var Node;
+function transformer(cst) {
+    var concatenate = concatenateFactory();
 
-    Node = retext.TextOM.Node;
+    visit(cst, any);
+    visit(cst, concatenate);
 
-    Node.on('changetext', onchangetext);
-    Node.on('insert', oninsert);
-    Node.on('remove', onremove);
+    concatenate.done();
+}
+
+/**
+ * Attacher.
+ *
+ * @return {Function} - `transformer`.
+ */
+function attacher() {
+    return transformer;
 }
 
 /*
- * Expose `directionality`.
+ * Expose.
  */
 
-module.exports = directionality;
+module.exports = attacher;
